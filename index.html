@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SakeFind | 日本酒発見アプリ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;700&family=Cinzel:wght@400;600;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- Custom Cursor -->
+  <div class="cursor-dot" id="cursorDot"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- Navigation -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="#hero" class="nav-logo">
+        <span class="logo-kanji">酒</span>
+        <span class="logo-text">SakeFind</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="メニュー">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#services">サービス</a></li>
+        <li><a href="#ai-diagnosis">AI診断</a></li>
+        <li><a href="#catalog">カタログ</a></li>
+        <li><a href="#map">店舗MAP</a></li>
+        <li><a href="#timeline">タイムライン</a></li>
+        <li><a href="#label-scan">ラベルスキャン</a></li>
+        <li><a href="#subscription" class="nav-cta">頒布会</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════ HERO ═══════════════════════════ -->
+  <section class="hero" id="hero">
+    <div class="hero-particles" id="particles"></div>
+    <div class="hero-bg-grid"></div>
+    <div class="hero-content">
+      <p class="hero-eyebrow">DISCOVER JAPANESE SAKE</p>
+      <h1 class="hero-title">
+        <span class="hero-title-jp">日本酒の</span>
+        <span class="hero-title-gold">世界へ</span>
+      </h1>
+      <p class="hero-subtitle">AIがあなたの味覚を分析し、運命の一本を見つけ出す。<br>日本が誇る清酒文化を、もっと身近に。</p>
+      <div class="hero-actions">
+        <a href="#ai-diagnosis" class="btn btn-primary">AI味覚診断を始める</a>
+        <a href="#catalog" class="btn btn-outline">カタログを見る</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-num" data-count="1500">0</span><span>+</span><p>銘柄</p></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span class="stat-num" data-count="300">0</span><span>+</span><p>蔵元</p></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span class="stat-num" data-count="47">0</span><span></span><p>都道府県</p></div>
+      </div>
+    </div>
+    <div class="hero-bottle">
+      <div class="bottle-glow"></div>
+      <svg class="bottle-svg" viewBox="0 0 120 320" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="bottleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   style="stop-color:#1a1015" />
+            <stop offset="40%"  style="stop-color:#2a1f25" />
+            <stop offset="60%"  style="stop-color:#3a2a30" />
+            <stop offset="100%" style="stop-color:#1a1015" />
+          </linearGradient>
+          <linearGradient id="capGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   style="stop-color:#8a7040" />
+            <stop offset="50%"  style="stop-color:#c9a84c" />
+            <stop offset="100%" style="stop-color:#8a7040" />
+          </linearGradient>
+          <linearGradient id="labelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   style="stop-color:#1a0f12" />
+            <stop offset="100%" style="stop-color:#0d080a" />
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <rect x="44" y="0" width="32" height="8" rx="4" fill="url(#capGrad)" />
+        <path d="M44 8 L38 40 L82 40 L76 8Z" fill="url(#bottleGrad)" />
+        <line x1="44" y1="8" x2="38" y2="40" stroke="#c9a84c" stroke-width="0.5" opacity="0.4"/>
+        <line x1="76" y1="8" x2="82" y2="40" stroke="#c9a84c" stroke-width="0.5" opacity="0.4"/>
+        <path d="M38 40 Q20 60 20 80 L100 80 Q100 60 82 40Z" fill="url(#bottleGrad)" />
+        <rect x="20" y="80" width="80" height="220" rx="4" fill="url(#bottleGrad)" />
+        <rect x="24" y="85" width="8"  height="210" rx="4" fill="white" opacity="0.04" />
+        <rect x="25" y="110" width="70" height="150" rx="2" fill="url(#labelGrad)" stroke="#c9a84c" stroke-width="0.8" />
+        <line x1="28" y1="120" x2="92" y2="120" stroke="#c9a84c" stroke-width="0.5" opacity="0.6"/>
+        <line x1="28" y1="250" x2="92" y2="250" stroke="#c9a84c" stroke-width="0.5" opacity="0.6"/>
+        <text x="60" y="148" text-anchor="middle" font-family="'Noto Serif JP'" font-size="18" fill="#c9a84c" filter="url(#glow)">純米</text>
+        <text x="60" y="170" text-anchor="middle" font-family="'Noto Serif JP'" font-size="10" fill="#c9a84c" opacity="0.8">大吟醸</text>
+        <text x="60" y="195" text-anchor="middle" font-family="Cinzel" font-size="7"  fill="#c9a84c" opacity="0.6" letter-spacing="2">SAKE FIND</text>
+        <text x="60" y="220" text-anchor="middle" font-family="'Noto Serif JP'" font-size="8" fill="#8a7060" opacity="0.8">醸造元　幸酒造</text>
+        <text x="60" y="238" text-anchor="middle" font-family="'Noto Serif JP'" font-size="8" fill="#8a7060" opacity="0.8">新潟県</text>
+        <line x1="20" y1="95"  x2="100" y2="95"  stroke="#c9a84c" stroke-width="0.3" opacity="0.3"/>
+        <line x1="20" y1="290" x2="100" y2="290" stroke="#c9a84c" stroke-width="0.3" opacity="0.3"/>
+        <rect x="20" y="296" width="80" height="4" rx="2" fill="#0f0a0c" />
+      </svg>
+    </div>
+    <div class="hero-scroll-hint">
+      <span>SCROLL</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SERVICES ═══════════════════════════ -->
+  <section class="section" id="services">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-eyebrow">FEATURES</p>
+        <h2 class="section-title">6つの体験</h2>
+        <p class="section-desc">SakeFindが提供する、日本酒との新しい出会い方</p>
+      </div>
+      <div class="services-grid">
+
+        <div class="service-card reveal" data-delay="0">
+          <div class="service-num">01</div>
+          <div class="service-icon">
+            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="22" r="10" fill="none" stroke="#c9a84c" stroke-width="1.5"/><path d="M24 32 L24 46" stroke="#c9a84c" stroke-width="1.5"/><path d="M16 46 L32 46" stroke="#c9a84c" stroke-width="1.5"/><circle cx="24" cy="22" r="3" fill="#c9a84c"/></svg>
+          </div>
+          <h3>店舗マップ</h3>
+          <p>全国の日本酒取扱い店舗・酒蔵を地図上で一覧。現在地から最寄りの名店を即検索。</p>
+          <a href="#map" class="service-link">地図を開く →</a>
+        </div>
+
+        <div class="service-card reveal" data-delay="100">
+          <div class="service-num">02</div>
+          <div class="service-icon">
+            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="18" fill="none" stroke="#c9a84c" stroke-width="1.5"/><path d="M18 24 L22 28 L30 18" stroke="#c9a84c" stroke-width="1.5" fill="none"/><path d="M8 24 Q16 16 24 24 Q32 32 40 24" stroke="#c9a84c" stroke-width="1" fill="none" opacity="0.5"/></svg>
+          </div>
+          <h3>AI味覚診断</h3>
+          <p>5つの質問に答えるだけ。AIがあなたの味覚プロファイルを分析し、ぴったりの銘柄をレコメンド。</p>
+          <a href="#ai-diagnosis" class="service-link">診断する →</a>
+        </div>
+
+        <div class="service-card reveal" data-delay="200">
+          <div class="service-num">03</div>
+          <div class="service-icon">
+            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><line x1="12" y1="12" x2="12" y2="40" stroke="#c9a84c" stroke-width="1.5"/><circle cx="12" cy="12" r="3" fill="#c9a84c"/><circle cx="12" cy="24" r="3" fill="#c9a84c" opacity="0.6"/><circle cx="12" cy="36" r="3" fill="#c9a84c" opacity="0.3"/><line x1="15" y1="12" x2="38" y2="12" stroke="#c9a84c" stroke-width="1"/><line x1="15" y1="24" x2="34" y2="24" stroke="#c9a84c" stroke-width="1" opacity="0.6"/><line x1="15" y1="36" x2="30" y2="36" stroke="#c9a84c" stroke-width="1" opacity="0.3"/></svg>
+          </div>
+          <h3>タイムライン</h3>
+          <p>全国のSake Finderたちのテイスティングメモが集まるSNS的フィード。新しい出会いのヒントが見つかる。</p>
+          <a href="#timeline" class="service-link">見てみる →</a>
+        </div>
+
+        <div class="service-card reveal" data-delay="300">
+          <div class="service-num">04</div>
+          <div class="service-icon">
+            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="8" width="28" height="34" rx="3" fill="none" stroke="#c9a84c" stroke-width="1.5"/><line x1="16" y1="18" x2="32" y2="18" stroke="#c9a84c" stroke-width="1"/><line x1="16" y1="24" x2="32" y2="24" stroke="#c9a84c" stroke-width="1" opacity="0.6"/><line x1="16" y1="30" x2="26" y2="30" stroke="#c9a84c" stroke-width="1" opacity="0.4"/><circle cx="33" cy="36" r="6" fill="#c9a84c" opacity="0.15" stroke="#c9a84c" stroke-width="1"/><path d="M30 36 L32 38 L36 34" stroke="#c9a84c" stroke-width="1" fill="none"/></svg>
+          </div>
+          <h3>マイ履歴</h3>
+          <p>飲んだ銘柄を記録・管理。テイスティングノートとして活用でき、自分だけの日本酒データベースを構築。</p>
+          <span class="service-link service-link-soon">近日公開</span>
+        </div>
+
+        <div class="service-card reveal" data-delay="400">
+          <div class="service-num">05</div>
+          <div class="service-icon">
+            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="12" width="32" height="26" rx="3" fill="none" stroke="#c9a84c" stroke-width="1.5"/><path d="M18 12 L18 8 L30 8 L30 12" stroke="#c9a84c" stroke-width="1.5" fill="none"/><circle cx="24" cy="25" r="7" fill="none" stroke="#c9a84c" stroke-width="1.2"/><circle cx="24" cy="25" r="2" fill="#c9a84c"/></svg>
+          </div>
+          <h3>ラベルスキャン</h3>
+          <p>ラベルを撮影するだけで銘柄を即認識。詳細情報・ペアリング提案・購入リンクをその場で表示。</p>
+          <a href="#label-scan" class="service-link">スキャンする →</a>
+        </div>
+
+        <div class="service-card reveal" data-delay="500">
+          <div class="service-num">06</div>
+          <div class="service-icon">
+            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M8 36 L16 20 L24 28 L32 16 L40 24" stroke="#c9a84c" stroke-width="1.5" fill="none"/><circle cx="40" cy="24" r="3" fill="#c9a84c"/><path d="M8 40 L40 40" stroke="#c9a84c" stroke-width="0.8" opacity="0.4"/></svg>
+          </div>
+          <h3>EC送客</h3>
+          <p>気に入った銘柄はそのままオンラインで購入。全国の酒蔵・専門店ECサイトへダイレクトに繋ぎます。</p>
+          <a href="#catalog" class="service-link">購入する →</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ AI DIAGNOSIS ═══════════════════════════ -->
+  <section class="section section-dark" id="ai-diagnosis">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-eyebrow">AI SOMMELIER</p>
+        <h2 class="section-title">AI味覚診断</h2>
+        <p class="section-desc">5つの質問で、あなただけの運命の一本を見つけます</p>
+      </div>
+      <div class="diagnosis-wrapper reveal">
+        <!-- Step dots -->
+        <div class="diag-steps-row">
+          <div class="diag-steps" id="diagSteps"></div>
+          <span class="progress-text" id="progressText">0 / 5</span>
+        </div>
+        <!-- Progress bar -->
+        <div class="progress-bar" id="progressBar">
+          <div class="progress-bar-fill" id="progressFill"></div>
+        </div>
+        <!-- Quiz -->
+        <div class="diagnosis-quiz" id="diagnosisQuiz"></div>
+        <!-- Result (replaced dynamically by JS) -->
+        <div class="diagnosis-result hidden" id="diagnosisResult"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ CATALOG ═══════════════════════════ -->
+  <section class="section" id="catalog">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-eyebrow">CATALOG</p>
+        <h2 class="section-title">日本酒カタログ</h2>
+        <p class="section-desc">全国の厳選銘柄を網羅。検索・絞り込みで好みの一本を。</p>
+      </div>
+      <div class="catalog-controls reveal">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" id="searchInput" placeholder="銘柄名・蔵元で検索..." />
+        </div>
+        <div class="filter-group">
+          <select id="filterType">
+            <option value="">種類</option>
+            <option value="純米大吟醸">純米大吟醸</option>
+            <option value="大吟醸">大吟醸</option>
+            <option value="純米吟醸">純米吟醸</option>
+            <option value="吟醸">吟醸</option>
+            <option value="純米">純米</option>
+            <option value="本醸造">本醸造</option>
+            <option value="普通酒">普通酒</option>
+          </select>
+          <select id="filterPref">
+            <option value="">産地</option>
+            <option value="新潟">新潟</option>
+            <option value="山形">山形</option>
+            <option value="秋田">秋田</option>
+            <option value="���島">福島</option>
+            <option value="兵庫">兵庫</option>
+            <option value="京都">京都</option>
+            <option value="広島">広島</option>
+            <option value="石川">石川</option>
+            <option value="長野">長野</option>
+            <option value="山口">山口</option>
+            <option value="三重">三重</option>
+            <option value="佐賀">佐賀</option>
+          </select>
+          <select id="sortSelect">
+            <option value="featured">おすすめ順</option>
+            <option value="price_asc">価格が安い順</option>
+            <option value="price_desc">価格が高い順</option>
+            <option value="alc_desc">アルコール度数順</option>
+          </select>
+          <button class="btn-reset" id="resetFilters">リセット</button>
+        </div>
+      </div>
+      <div class="catalog-meta reveal">
+        <span id="catalogCount" class="catalog-count"></span>
+      </div>
+      <div class="catalog-grid" id="catalogGrid">
+        <div class="catalog-loading" id="catalogLoading">
+          <div class="loader"></div>
+          <p>銘柄を読み込み中...</p>
+        </div>
+      </div>
+      <div class="catalog-empty hidden" id="catalogEmpty">
+        <p>該当する銘柄が見つかりませんでした</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ MAP ═══════════════════════════ -->
+  <section class="section section-dark" id="map">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-eyebrow">STORE MAP</p>
+        <h2 class="section-title">全国マップ</h2>
+        <p class="section-desc">全国の酒蔵・酒屋・飲食店をクリックして詳細を確認</p>
+      </div>
+      <!-- Filter toggles -->
+      <div class="map-filters reveal">
+        <button class="map-filter-btn active" data-type="brewery" onclick="toggleMapType('brewery', this)">
+          <span class="mf-dot brewery"></span>酒蔵 <span class="mf-count" id="countBrewery"></span>
+        </button>
+        <button class="map-filter-btn active" data-type="shop" onclick="toggleMapType('shop', this)">
+          <span class="mf-dot shop"></span>酒屋 <span class="mf-count" id="countShop"></span>
+        </button>
+        <button class="map-filter-btn active" data-type="restaurant" onclick="toggleMapType('restaurant', this)">
+          <span class="mf-dot restaurant"></span>飲食店 <span class="mf-count" id="countRestaurant"></span>
+        </button>
+      </div>
+      <div class="map-wrapper reveal">
+        <div id="mapContainer" class="map-container"></div>
+        <!-- Detail panel (shown on marker click) -->
+        <div class="map-panel hidden" id="mapPanel"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ TIMELINE ═══════════════════════════ -->
+  <section class="section" id="timeline">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-eyebrow">COMMUNITY</p>
+        <h2 class="section-title">タイムライン</h2>
+        <p class="section-desc">全国のSake Finderたちの最新テイスティングレポート</p>
+      </div>
+      <div class="timeline-wrapper" id="timelineWrapper"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ LABEL SCAN ═══════════════════════════ -->
+  <section class="section section-dark" id="label-scan">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-eyebrow">AI VISION</p>
+        <h2 class="section-title">ラベルスキャン</h2>
+        <p class="section-desc">ラベルを撮影するだけで銘柄情報・ペアリングを瞬時に取得</p>
+      </div>
+      <div class="scan-wrapper reveal">
+        <!-- Upload / Preview -->
+        <div class="scan-upload-area" id="scanUploadArea">
+          <input type="file" accept="image/*" id="scanFileInput" hidden />
+          <div class="scan-placeholder" id="scanPlaceholder">
+            <div class="scan-icon">
+              <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4"  y="4"  width="14" height="6" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+                <rect x="4"  y="4"  width="6" height="14" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+                <rect x="46" y="4"  width="14" height="6" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+                <rect x="54" y="4"  width="6" height="14" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+                <rect x="4"  y="54" width="14" height="6" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+                <rect x="4"  y="46" width="6" height="14" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+                <rect x="46" y="54" width="14" height="6" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+                <rect x="54" y="46" width="6" height="14" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+                <line x1="32" y1="20" x2="32" y2="44" stroke="#c9a84c" stroke-width="1.5" stroke-dasharray="3,3"/>
+              </svg>
+            </div>
+            <p>ラベル画像をここにドロップ</p>
+            <span>または</span>
+            <button class="btn btn-outline" onclick="document.getElementById('scanFileInput').click()">ファイルを選択</button>
+          </div>
+          <div class="scan-preview hidden" id="scanPreview">
+            <img id="scanPreviewImg" alt="スキャン画像" />
+            <div class="scan-overlay"><div class="scan-line"></div></div>
+          </div>
+        </div>
+
+        <!-- Right column: steps + result -->
+        <div class="scan-right">
+          <!-- Step progress (hidden until scan starts) -->
+          <div class="scan-steps hidden" id="scanSteps"></div>
+
+          <!-- Result -->
+          <div class="scan-result hidden" id="scanResult">
+            <div class="scan-result-header">
+              <div class="scan-result-badge">AI認識完了</div>
+              <h3 id="scanResultName"></h3>
+              <p id="scanResultBrewery"></p>
+            </div>
+            <div class="scan-result-details" id="scanResultDetails"></div>
+            <a href="#" class="btn btn-primary" id="scanBuyBtn" target="_blank" rel="noopener">購入ページへ</a>
+          </div>
+
+          <!-- Idle state placeholder -->
+          <div class="scan-idle" id="scanIdle">
+            <div class="scan-idle-icon">🔍</div>
+            <p>左の画像エリアにラベルをアップロードすると、<br>AIが銘柄・ペアリング・購入先を自動で表示します。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ SUBSCRIPTION ═══════════════════════════ -->
+  <section class="section" id="subscription">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-eyebrow">SUBSCRIPTION</p>
+        <h2 class="section-title">サブスク頒布会</h2>
+        <p class="section-desc">毎月、厳選された日本酒があなたの元に届く特別なプラン</p>
+      </div>
+
+      <!-- Plans -->
+      <div class="subscription-grid">
+        <div class="sub-card reveal" data-delay="0">
+          <div class="sub-badge">スタンダード</div>
+          <div class="sub-price"><span class="sub-yen">¥</span>3,980<span class="sub-period">/月</span></div>
+          <ul class="sub-features">
+            <li>毎月2本の厳選銘柄</li>
+            <li>テイスティングカード付き</li>
+            <li>ペアリングレシピ</li>
+            <li>蔵元情報カード</li>
+          </ul>
+          <button class="btn btn-outline sub-btn">申し込む</button>
+        </div>
+        <div class="sub-card sub-card-featured reveal" data-delay="150">
+          <div class="sub-badge-featured">人気No.1</div>
+          <div class="sub-badge">プレミアム</div>
+          <div class="sub-price"><span class="sub-yen">¥</span>7,480<span class="sub-period">/月</span></div>
+          <ul class="sub-features">
+            <li>毎月4本の厳選銘柄</li>
+            <li>大吟醸クラス必ず1本</li>
+            <li>テイスティングカード付き</li>
+            <li>ペアリングレシピ</li>
+            <li>蔵元直筆メッセージ</li>
+            <li>限定セール先行アクセス</li>
+          </ul>
+          <button class="btn btn-primary sub-btn">申し込む</button>
+        </div>
+        <div class="sub-card reveal" data-delay="300">
+          <div class="sub-badge">コレクター</div>
+          <div class="sub-price"><span class="sub-yen">¥</span>14,800<span class="sub-period">/月</span></div>
+          <ul class="sub-features">
+            <li>毎月6本の最高級銘柄</li>
+            <li>入手困難銘柄を優先的に</li>
+            <li>専任ソムリエのコメント</li>
+            <li>限定陶器盃プレゼント</li>
+            <li>蔵元訪問ツアー割引</li>
+            <li>VIP会員優待</li>
+          </ul>
+          <button class="btn btn-outline sub-btn">申し込む</button>
+        </div>
+      </div>
+
+      <!-- Testimonials -->
+      <div class="sub-section-title reveal" style="margin-top:4rem">
+        <p class="section-eyebrow">REVIEWS</p>
+        <h3 class="section-title" style="font-size:1.6rem">会員の声</h3>
+      </div>
+      <div class="testimonial-grid" id="testimonialGrid"></div>
+
+      <!-- FAQ -->
+      <div class="sub-section-title reveal" style="margin-top:4rem">
+        <p class="section-eyebrow">FAQ</p>
+        <h3 class="section-title" style="font-size:1.6rem">よくある質問</h3>
+      </div>
+      <div class="faq-container reveal" id="faqContainer"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ BREWERY ═══════════════════════════ -->
+  <section class="section section-dark" id="brewery">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-eyebrow">BREWERY</p>
+        <h2 class="section-title">蔵元紹介</h2>
+        <p class="section-desc">日本各地の個性豊かな蔵元たちをご紹介します</p>
+      </div>
+      <div class="brewery-grid" id="breweryGrid"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════ FOOTER ═══════════════════════════ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="#hero" class="nav-logo">
+            <span class="logo-kanji">酒</span>
+            <span class="logo-text">SakeFind</span>
+          </a>
+          <p>AIが繋ぐ、あなたと日本酒の物語。<br>全国の蔵元と酒ファンをひとつに。</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>サービス</h4>
+            <ul>
+              <li><a href="#ai-diagnosis">AI味覚診断</a></li>
+              <li><a href="#catalog">日本酒カタログ</a></li>
+              <li><a href="#map">店舗マップ</a></li>
+              <li><a href="#label-scan">ラベルスキャン</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>コミュニティ</h4>
+            <ul>
+              <li><a href="#timeline">タイムライン</a></li>
+              <li><a href="#subscription">頒布会</a></li>
+              <li><a href="#brewery">蔵元紹介</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>SakeFind</h4>
+            <ul>
+              <li><a href="#">運営会社</a></li>
+              <li><a href="#">利用規約</a></li>
+              <li><a href="#">プライバシーポリシー</a></li>
+              <li><a href="#">お問い合わせ</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 SakeFind. All rights reserved.</p>
+        <p class="footer-tagline">日本酒文化を、世界へ。</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
