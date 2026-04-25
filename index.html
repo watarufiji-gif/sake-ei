@@ -1,509 +1,1770 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SakeFind | 日本酒発見アプリ</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;700&family=Cinzel:wght@400;600;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="css/style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SakeFind - 日本酒発見アプリ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://vgoblfarmrljkujqyogd.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_wJhDnc2aQ6WTEM7F5LzYDQ_ib5kov-v';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const GOOGLE_MAPS_API_KEY = 'AIzaSyA0pcsYINmGc70sy1Ecev1bq1Sk7h8l0yo';
+  const ANTHROPIC_API_KEY   = ''; // Anthropic API キーを入力
+</script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #1a0a00;
+  --accent: #c8a96e;
+  --card-bg: #ffffff;
+  --text-light: #f5e6d0;
+  --text-muted: #8a7a6a;
+  --border: #3d2010;
+  --hover: #2d1505;
+}
+body { font-family: 'Shippori Mincho', 'Yu Mincho', '游明朝', 'Hiragino Mincho ProN', serif; background: #f0e8dc; color: #2a1505; min-height: 100vh; }
+
+/* ===== HEADER ===== */
+header {
+  background: var(--bg);
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+.logo {
+  font-size: 20px; font-weight: 900; color: var(--accent);
+  white-space: nowrap; letter-spacing: 1px; cursor: pointer; user-select: none; flex-shrink: 0;
+}
+.logo span { font-size: 24px; margin-right: 3px; }
+nav { display: flex; align-items: center; gap: 0; flex: 1; justify-content: center; }
+.tab-btn {
+  background: none; border: none; color: #b09070;
+  font-size: 13px; padding: 18px 12px; cursor: pointer;
+  white-space: nowrap; position: relative; transition: color 0.2s; font-family: inherit;
+}
+.tab-btn:hover { color: var(--accent); }
+.tab-btn.active { color: var(--accent); }
+.tab-btn.active::after {
+  content: ''; position: absolute; bottom: 0; left: 12px; right: 12px;
+  height: 2px; background: var(--accent); border-radius: 2px 2px 0 0;
+}
+.header-search-wrap { flex: 1; max-width: 240px; }
+.search-bar {
+  width: 100%; background: #2d1505; border: 1px solid var(--border);
+  border-radius: 20px; padding: 7px 14px; color: var(--text-light);
+  font-size: 13px; outline: none; font-family: inherit;
+}
+.search-bar::placeholder { color: #6a5040; }
+.search-bar:focus { border-color: var(--accent); }
+.header-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.btn-login {
+  background: none; border: 1px solid var(--accent); color: var(--accent);
+  padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;
+  font-family: inherit; transition: background 0.2s;
+}
+.btn-login:hover { background: rgba(200,169,110,0.1); }
+.btn-register {
+  background: var(--accent); border: none; color: var(--bg);
+  padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;
+  font-weight: bold; font-family: inherit; transition: opacity 0.2s;
+}
+.btn-register:hover { opacity: 0.85; }
+
+/* ===== PAGE ===== */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--bg); border-top: 1px solid var(--border);
+  z-index: 200; justify-content: space-around; padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+}
+.bnav-btn {
+  background: none; border: none; color: #b09070;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  cursor: pointer; font-family: inherit; padding: 4px 8px; min-width: 56px;
+  transition: color 0.2s;
+}
+.bnav-btn.active { color: var(--accent); }
+.bnav-btn span:first-child { font-size: 20px; line-height: 1; }
+.bnav-btn span:last-child { font-size: 10px; }
+
+/* ===== CATALOG ===== */
+.catalog-layout { display: flex; min-height: calc(100vh - 56px); }
+.sidebar {
+  width: 190px; min-width: 190px; background: #f8f0e4;
+  border-right: 1px solid #d4c4a8; padding: 16px 0;
+}
+.filter-title {
+  font-size: 11px; font-weight: bold; color: #8a7a6a;
+  letter-spacing: 1px; padding: 10px 14px 6px; text-transform: uppercase;
+}
+.filter-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 14px; cursor: pointer; font-size: 13px; color: #3a2510;
+  transition: background 0.15s; user-select: none;
+}
+.filter-item:hover { background: #e8d8c0; }
+.filter-item.active { background: var(--bg); color: var(--accent); }
+.filter-count {
+  font-size: 10px; background: #ddd; color: #666; border-radius: 10px; padding: 1px 6px;
+}
+.filter-item.active .filter-count { background: #3d2010; color: var(--accent); }
+.filter-divider { height: 1px; background: #d4c4a8; margin: 6px 14px; }
+.main-content { flex: 1; padding: 20px; }
+.main-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.result-count { font-size: 14px; color: #6a5040; }
+.result-count strong { color: #2a1505; }
+.sort-select {
+  border: 1px solid #c4b49a; background: white; padding: 5px 10px;
+  border-radius: 4px; font-size: 13px; font-family: inherit; color: #2a1505; cursor: pointer; outline: none;
+}
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+.sake-card {
+  background: white; border-radius: 10px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.sake-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.13); }
+.card-image { width: 100%; aspect-ratio: 3/4; position: relative; overflow: hidden; }
+.card-label {
+  width: 100%; height: 100%; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 12px; position: relative;
+}
+.label-content { position: relative; z-index: 1; text-align: center; width: 100%; }
+.heart-btn {
+  position: absolute; top: 6px; right: 6px;
+  background: rgba(255,255,255,0.85); border: none; border-radius: 50%;
+  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 14px; z-index: 2; transition: background 0.2s; color: #ccc;
+}
+.heart-btn.liked { color: #e84b4b; }
+.card-body { padding: 10px; }
+.card-kura { font-size: 11px; color: #8a7a6a; margin-bottom: 2px; }
+.card-name { font-size: 14px; font-weight: bold; color: #1a0a00; margin-bottom: 6px; line-height: 1.3; }
+.card-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 8px; }
+.tag { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: #f0e8dc; color: #5a3a20; border: 1px solid #d4c4a8; }
+.card-footer { display: flex; align-items: center; justify-content: space-between; }
+.btn-buy {
+  background: var(--bg); color: var(--accent); border: none;
+  padding: 5px 10px; border-radius: 4px; font-size: 11px;
+  cursor: pointer; font-family: inherit; font-weight: bold; transition: background 0.2s;
+}
+.btn-buy:hover { background: #2d1505; }
+
+/* ===== DETAIL ===== */
+#page-detail { padding: 0; min-height: calc(100vh - 56px); background: #f0e8dc; }
+.detail-layout { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 56px); }
+.detail-image-col {
+  background: var(--bg); display: flex; align-items: center; justify-content: center;
+  padding: 40px; min-height: 500px;
+}
+.detail-label {
+  width: 260px; max-width: 100%; aspect-ratio: 3/4; border-radius: 8px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 28px 20px; box-shadow: 0 16px 48px rgba(0,0,0,0.5); position: relative; overflow: hidden;
+}
+.detail-info-col { padding: 36px 40px; overflow-y: auto; }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 5px; color: var(--accent);
+  background: none; border: none; cursor: pointer; font-size: 13px;
+  font-family: inherit; margin-bottom: 20px; padding: 0; transition: opacity 0.2s;
+}
+.back-btn:hover { opacity: 0.7; }
+.detail-kura { font-size: 13px; color: #8a7a6a; margin-bottom: 4px; }
+.detail-name { font-size: 28px; font-weight: 900; color: #1a0a00; margin-bottom: 10px; line-height: 1.2; }
+.detail-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 24px; }
+.detail-tags .tag { font-size: 12px; padding: 3px 9px; }
+.spec-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+.spec-table tr { border-bottom: 1px solid #d4c4a8; }
+.spec-table td { padding: 9px 0; font-size: 13px; }
+.spec-table td:first-child { color: #8a7a6a; width: 110px; }
+.spec-table td:last-child { font-weight: 600; color: #1a0a00; }
+.pairing-section { margin-bottom: 24px; }
+.section-label { font-size: 11px; font-weight: bold; color: #8a7a6a; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+.pairing-items { display: flex; gap: 6px; flex-wrap: wrap; }
+.pairing-item { background: white; border: 1px solid #d4c4a8; border-radius: 20px; padding: 3px 10px; font-size: 12px; color: #3a2510; }
+.detail-price { font-size: 16px; color: #1a0a00; margin-bottom: 18px; }
+.detail-actions { display: flex; gap: 10px; }
+.btn-ec {
+  flex: 1; background: var(--accent); color: var(--bg); border: none;
+  padding: 13px 20px; border-radius: 6px; font-size: 14px; font-weight: bold;
+  cursor: pointer; font-family: inherit; transition: opacity 0.2s;
+}
+.btn-ec:hover { opacity: 0.85; }
+.btn-fav {
+  background: white; border: 1px solid #d4c4a8; color: #e84b4b;
+  padding: 13px 16px; border-radius: 6px; font-size: 17px; cursor: pointer; transition: background 0.2s;
+}
+.btn-fav:hover { background: #fff0f0; }
+.btn-fav.liked { background: #fff0f0; }
+
+/* ===== TAB CONTENT ===== */
+.tab-content { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+.tab-title { font-size: 26px; font-weight: 900; color: #1a0a00; margin-bottom: 6px; }
+.tab-subtitle { font-size: 14px; color: #6a5040; margin-bottom: 28px; }
+
+/* ===== AI QUIZ ===== */
+.ai-start-btn {
+  background: var(--bg); color: var(--accent); border: none;
+  padding: 15px 36px; border-radius: 8px; font-size: 16px; font-weight: bold;
+  cursor: pointer; font-family: inherit; transition: background 0.2s; display: block; margin-bottom: 28px;
+}
+.ai-start-btn:hover { background: #2d1505; }
+.ai-quiz { display: none; }
+.ai-quiz.active { display: block; }
+.quiz-steps-indicator { display: flex; gap: 5px; margin-bottom: 18px; justify-content: center; }
+.step-dot { width: 26px; height: 4px; border-radius: 2px; background: #d4c4a8; transition: background 0.3s; }
+.step-dot.done { background: var(--accent); }
+.step-dot.active { background: var(--bg); }
+.quiz-step { background: white; border-radius: 12px; padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+.quiz-progress { font-size: 12px; color: #8a7a6a; margin-bottom: 5px; letter-spacing: 1px; }
+.quiz-q { font-size: 19px; font-weight: bold; color: #1a0a00; margin-bottom: 20px; line-height: 1.4; }
+.quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.quiz-option {
+  background: #f8f0e4; border: 2px solid #d4c4a8; border-radius: 10px;
+  padding: 16px 14px; cursor: pointer; text-align: center; font-size: 14px;
+  font-family: inherit; transition: all 0.2s; color: #2a1505; line-height: 1.4;
+}
+.quiz-option:hover { border-color: var(--accent); background: #f0e8d0; transform: translateY(-2px); }
+.quiz-option.selected { border-color: var(--accent); background: var(--bg); color: var(--accent); }
+.quiz-option .opt-icon { font-size: 22px; display: block; margin-bottom: 5px; }
+.quiz-analyzing { display: none; text-align: center; padding: 36px; background: white; border-radius: 12px; margin-top: 18px; }
+.quiz-analyzing.active { display: block; }
+.analyzing-spinner {
+  width: 44px; height: 44px; border: 3px solid #f0e8dc;
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.8s linear infinite; margin: 0 auto 14px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.quiz-result { display: none; margin-top: 22px; }
+.quiz-result.active { display: block; }
+.quiz-result-title { font-size: 20px; font-weight: 900; color: #1a0a00; margin-bottom: 4px; }
+.quiz-result-sub { font-size: 13px; color: #8a7a6a; margin-bottom: 20px; }
+.result-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.result-card {
+  background: white; border-radius: 12px; overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1); position: relative;
+  border: 2px solid transparent; transition: transform 0.2s, box-shadow 0.2s;
+}
+.result-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+.result-card.rank-1 { border-color: var(--accent); }
+.rank-badge { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 4px; }
+.rank-badge.gold   { background: #f5c842; color: #5a3a00; }
+.rank-badge.silver { background: #c0c8d0; color: #3a4048; }
+.rank-badge.bronze { background: #d4916a; color: #5a2010; }
+.result-label { width: 100%; aspect-ratio: 3/2; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.match-score { position: absolute; bottom: 6px; right: 6px; z-index: 2; background: rgba(0,0,0,0.55); color: white; font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 10px; }
+.result-card-body { padding: 12px; }
+.result-card-kura { font-size: 11px; color: #8a7a6a; margin-bottom: 2px; }
+.result-card-name { font-size: 15px; font-weight: 900; color: #1a0a00; margin-bottom: 5px; line-height: 1.3; }
+.result-taste-bars { margin-bottom: 10px; }
+.result-taste-row { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
+.result-taste-label { font-size: 9px; color: #8a7a6a; width: 28px; flex-shrink: 0; }
+.result-taste-track { flex: 1; height: 3px; background: #f0e8dc; border-radius: 2px; overflow: hidden; }
+.result-taste-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+.result-desc { font-size: 11px; color: #6a5040; line-height: 1.5; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.btn-buy-result {
+  display: block; width: 100%; text-align: center; padding: 9px;
+  background: var(--accent); color: var(--bg); border: none; border-radius: 6px;
+  font-size: 12px; font-weight: bold; cursor: pointer; font-family: inherit; text-decoration: none; transition: opacity 0.2s;
+}
+.btn-buy-result:hover { opacity: 0.85; }
+.quiz-retry-btn {
+  margin-top: 20px; background: none; border: 2px solid var(--accent);
+  color: var(--accent); padding: 9px 24px; border-radius: 6px; font-size: 13px;
+  font-weight: bold; cursor: pointer; font-family: inherit; transition: background 0.2s;
+}
+.quiz-retry-btn:hover { background: rgba(200,169,110,0.1); }
+.ai-small-badge {
+  display: inline-block; background: #e8f4e8; color: #2a5a2a; border: 1px solid #a8d4a8;
+  border-radius: 4px; font-size: 11px; padding: 3px 8px; margin-bottom: 16px;
+}
+
+/* ===== MAP ===== */
+#page-map { display: none; height: calc(100vh - 56px); }
+#page-map.active { display: flex; flex-direction: column; }
+.map-layout { display: flex; flex: 1; overflow: hidden; }
+.map-sidebar {
+  width: 280px; flex-shrink: 0; background: #f8f0e4;
+  border-right: 1px solid #d4c4a8; display: flex; flex-direction: column; overflow: hidden;
+}
+.map-filter-tabs { display: flex; border-bottom: 1px solid #d4c4a8; background: #f0e4cc; flex-shrink: 0; }
+.map-filter-tab {
+  flex: 1; background: none; border: none; padding: 10px 4px; font-size: 11px;
+  cursor: pointer; font-family: inherit; color: #6a5040; transition: all 0.2s; border-bottom: 2px solid transparent;
+}
+.map-filter-tab.active { color: var(--bg); border-bottom-color: var(--accent); font-weight: bold; }
+.map-list-wrap { flex: 1; overflow-y: auto; }
+.map-list-item {
+  padding: 10px 14px; border-bottom: 1px solid #e8d8c0; cursor: pointer;
+  transition: background 0.15s;
+}
+.map-list-item:hover { background: #e8d4b8; }
+.map-list-name { font-size: 13px; font-weight: bold; color: #1a0a00; }
+.map-list-meta { font-size: 11px; color: #8a7a6a; margin-top: 2px; }
+.map-list-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px;
+}
+.map-main { flex: 1; position: relative; min-height: 0; }
+#mapCanvas { position: absolute; inset: 0; }
+.map-nokey {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px;
+  background: #f0e8dc; text-align: center; padding: 24px;
+}
+.map-nokey-icon { font-size: 56px; }
+.map-nokey-title { font-size: 16px; font-weight: bold; color: #1a0a00; }
+.map-nokey-sub { font-size: 13px; color: #8a7a6a; max-width: 360px; line-height: 1.6; }
+.map-locate-btn {
+  background: var(--bg); color: var(--accent); border: none;
+  padding: 10px 22px; border-radius: 6px; font-size: 14px; font-weight: bold;
+  cursor: pointer; font-family: inherit; margin-top: 6px;
+}
+.map-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(240,232,220,0.8); font-size: 15px; color: #6a5040; }
+
+/* ===== SCAN ===== */
+.scan-wrap { max-width: 680px; margin: 40px auto; padding: 0 20px; }
+.scan-header { margin-bottom: 24px; }
+.scan-area {
+  display: flex; gap: 12px; margin-bottom: 20px;
+}
+.scan-drop-zone {
+  flex: 1; background: white; border-radius: 12px; padding: 32px 20px;
+  text-align: center; border: 2px dashed #d4c4a8; cursor: pointer;
+  transition: border-color 0.2s;
+}
+.scan-drop-zone:hover { border-color: var(--accent); }
+.scan-icon-big { font-size: 48px; margin-bottom: 12px; }
+.scan-drop-text { font-size: 15px; color: #3a2510; font-weight: bold; margin-bottom: 6px; }
+.scan-drop-sub { font-size: 12px; color: #8a7a6a; margin-bottom: 14px; }
+.scan-file-btn {
+  background: var(--bg); color: var(--accent); border: none;
+  padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: bold;
+  cursor: pointer; font-family: inherit;
+}
+.scan-camera-box {
+  width: 160px; background: white; border-radius: 12px; padding: 20px;
+  text-align: center; border: 2px solid #d4c4a8; display: flex;
+  flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+}
+.scan-camera-icon { font-size: 40px; }
+.scan-camera-btn {
+  background: #2a5a2a; color: white; border: none;
+  padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: bold;
+  cursor: pointer; font-family: inherit; width: 100%;
+}
+.scan-video-wrap { position: relative; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 12px; display: none; }
+#scanVideo { width: 100%; max-height: 300px; display: block; }
+.scan-capture-btn {
+  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+  background: white; color: #1a0a00; border: none; border-radius: 50px;
+  padding: 10px 24px; font-size: 14px; font-weight: bold; cursor: pointer; font-family: inherit;
+}
+canvas#scanCanvas { display: none; }
+.scan-nokey {
+  background: #fff8e8; border: 1px solid #e8c870; border-radius: 8px;
+  padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #5a4010;
+}
+.scan-loading { display: none; text-align: center; padding: 32px; background: white; border-radius: 12px; margin-bottom: 16px; }
+.scan-loading.active { display: block; }
+.scan-result-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); margin-bottom: 16px; display: none; }
+.scan-result-card.active { display: block; }
+.scan-result-img { width: 100%; max-height: 240px; object-fit: cover; }
+.scan-result-info { padding: 20px; }
+.scan-recognized { font-size: 12px; color: #2a8a3a; font-weight: bold; margin-bottom: 10px; }
+.scan-sake-name { font-size: 22px; font-weight: 900; color: #1a0a00; margin-bottom: 4px; }
+.scan-sake-brewery { font-size: 14px; color: #8a7a6a; margin-bottom: 14px; }
+.scan-pairing { margin-bottom: 16px; }
+.scan-pairing-title { font-size: 11px; font-weight: bold; color: #8a7a6a; letter-spacing: 1px; margin-bottom: 6px; }
+.scan-pairing-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.scan-pairing-chip { background: #f0e8dc; color: #5a3a20; border: 1px solid #d4c4a8; border-radius: 20px; padding: 3px 10px; font-size: 12px; }
+.scan-not-found { background: #fff0f0; border: 1px solid #e8a0a0; border-radius: 8px; padding: 16px; font-size: 14px; color: #8a2020; display: none; }
+.scan-not-found.active { display: block; }
+
+/* ===== TIMELINE ===== */
+.timeline-layout { max-width: 640px; margin: 0 auto; padding: 20px; }
+.timeline-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.timeline-tabs { display: flex; gap: 0; background: white; border-radius: 8px; padding: 4px; }
+.tl-tab {
+  background: none; border: none; padding: 7px 16px; border-radius: 6px;
+  font-size: 13px; font-family: inherit; cursor: pointer; color: #6a5040; transition: all 0.2s;
+}
+.tl-tab.active { background: var(--bg); color: var(--accent); font-weight: bold; }
+.tl-post-btn {
+  background: var(--accent); color: var(--bg); border: none;
+  padding: 9px 18px; border-radius: 8px; font-size: 14px; font-weight: bold;
+  cursor: pointer; font-family: inherit; transition: opacity 0.2s;
+}
+.tl-post-btn:hover { opacity: 0.85; }
+.timeline-posts { display: flex; flex-direction: column; gap: 14px; }
+.tl-post { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.tl-post-img { width: 100%; max-height: 280px; object-fit: cover; }
+.tl-post-body { padding: 14px; }
+.tl-post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.tl-avatar {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: bold; color: white;
+}
+.tl-post-meta { flex: 1; }
+.tl-post-user { font-size: 13px; font-weight: bold; color: #1a0a00; }
+.tl-post-time { font-size: 11px; color: #8a7a6a; }
+.tl-private-badge { background: #f0e8dc; color: #8a5020; font-size: 10px; padding: 2px 6px; border-radius: 3px; border: 1px solid #d4b888; }
+.tl-sake-tag { display: inline-block; background: #f0e8dc; color: #5a3a20; border: 1px solid #d4c4a8; border-radius: 4px; padding: 3px 9px; font-size: 12px; margin-bottom: 8px; }
+.tl-location-tag { font-size: 11px; color: #8a7a6a; margin-bottom: 8px; }
+.tl-comment { font-size: 14px; color: #2a1505; line-height: 1.6; }
+.tl-loading { text-align: center; padding: 40px; color: #8a7a6a; }
+.tl-empty { text-align: center; padding: 40px; color: #8a7a6a; font-size: 15px; }
+
+/* ===== POST MODAL ===== */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  z-index: 300; align-items: flex-end; justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal-sheet {
+  background: white; border-radius: 16px 16px 0 0; width: 100%; max-width: 640px;
+  max-height: 90vh; overflow-y: auto; padding: 20px;
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.modal-title { font-size: 18px; font-weight: 900; color: #1a0a00; }
+.modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #8a7a6a; line-height: 1; }
+.form-group { margin-bottom: 16px; }
+.form-label { font-size: 13px; font-weight: bold; color: #3a2510; margin-bottom: 6px; display: block; }
+.form-label .req { color: #e84b4b; }
+.photo-upload-area {
+  border: 2px dashed #d4c4a8; border-radius: 10px; overflow: hidden;
+  cursor: pointer; transition: border-color 0.2s; min-height: 140px;
+  display: flex; align-items: center; justify-content: center; position: relative;
+}
+.photo-upload-area:hover { border-color: var(--accent); }
+.photo-upload-placeholder { text-align: center; color: #8a7a6a; padding: 20px; }
+.photo-upload-placeholder div:first-child { font-size: 36px; margin-bottom: 6px; }
+#postPhotoPreview { width: 100%; max-height: 240px; object-fit: cover; display: none; }
+.form-select, .form-textarea {
+  width: 100%; border: 1px solid #d4c4a8; border-radius: 8px;
+  padding: 10px 12px; font-size: 14px; font-family: inherit; color: #2a1505;
+  outline: none; background: white; transition: border-color 0.2s;
+}
+.form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+.form-textarea { min-height: 90px; resize: vertical; }
+.radio-group { display: flex; gap: 20px; }
+.radio-label { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #2a1505; cursor: pointer; }
+.radio-label input { accent-color: var(--accent); width: 16px; height: 16px; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+.toggle-row span { font-size: 14px; color: #2a1505; }
+.toggle-switch { position: relative; width: 44px; height: 24px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; background: #d4c4a8; border-radius: 12px;
+  cursor: pointer; transition: background 0.2s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%;
+  background: white; top: 3px; left: 3px; transition: transform 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+.submit-btn {
+  width: 100%; background: var(--accent); color: var(--bg); border: none;
+  padding: 14px; border-radius: 8px; font-size: 15px; font-weight: bold;
+  cursor: pointer; font-family: inherit; transition: opacity 0.2s; margin-top: 8px;
+}
+.submit-btn:hover { opacity: 0.85; }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #f0e8dc; }
+::-webkit-scrollbar-thumb { background: #c4b49a; border-radius: 3px; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .bottom-nav { display: flex; }
+  header nav { display: none; }
+  body { padding-bottom: 64px; }
+  .catalog-layout { flex-direction: column; }
+  .sidebar { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid #d4c4a8; padding: 10px 0; max-height: 180px; overflow-y: auto; }
+  .card-grid { grid-template-columns: repeat(2, 1fr); }
+  .detail-layout { grid-template-columns: 1fr; }
+  .detail-image-col { min-height: 280px; padding: 24px; }
+  .result-cards { grid-template-columns: 1fr; }
+  .map-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #d4c4a8; max-height: 200px; }
+  .map-layout { flex-direction: column; }
+  .quiz-options { grid-template-columns: 1fr; }
+  .scan-area { flex-direction: column; }
+  .scan-camera-box { width: 100%; }
+}
+@media (max-width: 480px) {
+  .card-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .tab-content { padding: 0 14px; }
+}
+</style>
 </head>
 <body>
 
-  <!-- Custom Cursor -->
-  <div class="cursor-dot" id="cursorDot"></div>
-  <div class="cursor-ring" id="cursorRing"></div>
-
-  <!-- Navigation -->
-  <nav class="nav" id="nav">
-    <div class="nav-inner">
-      <a href="#hero" class="nav-logo">
-        <span class="logo-kanji">酒</span>
-        <span class="logo-text">SakeFind</span>
-      </a>
-      <button class="nav-toggle" id="navToggle" aria-label="メニュー">
-        <span></span><span></span><span></span>
-      </button>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="#services">サービス</a></li>
-        <li><a href="#ai-diagnosis">AI診断</a></li>
-        <li><a href="#catalog">カタログ</a></li>
-        <li><a href="#map">店舗MAP</a></li>
-        <li><a href="#timeline">タイムライン</a></li>
-        <li><a href="#label-scan">ラベルスキャン</a></li>
-        <li><a href="#subscription" class="nav-cta">頒布会</a></li>
-      </ul>
-    </div>
+<header>
+  <div class="logo" onclick="showTab('catalog')"><span>酒</span>SakeFind</div>
+  <nav>
+    <button class="tab-btn active" data-tab="catalog" onclick="showTab('catalog')">検索</button>
+    <button class="tab-btn" data-tab="ai" onclick="showTab('ai')">AI診断</button>
+    <button class="tab-btn" data-tab="map" onclick="showTab('map')">マップ</button>
+    <button class="tab-btn" data-tab="scan" onclick="showTab('scan')">スキャン</button>
+    <button class="tab-btn" data-tab="timeline" onclick="showTab('timeline')">タイムライン</button>
   </nav>
+  <div class="header-search-wrap">
+    <input type="text" class="search-bar" placeholder="銘柄・蔵元・産地を検索…" id="searchInput" oninput="onSearchInput()">
+  </div>
+  <div class="header-right">
+    <button class="btn-login" onclick="showUserMenu()">ログイン</button>
+    <button class="btn-register" onclick="showUserMenu()">会員登録</button>
+  </div>
+</header>
 
-  <!-- ═══════════════════════════ HERO ═══════════════════════════ -->
-  <section class="hero" id="hero">
-    <div class="hero-particles" id="particles"></div>
-    <div class="hero-bg-grid"></div>
-    <div class="hero-content">
-      <p class="hero-eyebrow">DISCOVER JAPANESE SAKE</p>
-      <h1 class="hero-title">
-        <span class="hero-title-jp">日本酒の</span>
-        <span class="hero-title-gold">世界へ</span>
-      </h1>
-      <p class="hero-subtitle">AIがあなたの味覚を分析し、運命の一本を見つけ出す。<br>日本が誇る清酒文化を、もっと身近に。</p>
-      <div class="hero-actions">
-        <a href="#ai-diagnosis" class="btn btn-primary">AI味覚診断を始める</a>
-        <a href="#catalog" class="btn btn-outline">カタログを見る</a>
+<!-- ===== CATALOG ===== -->
+<div id="page-catalog" class="page active">
+  <div class="catalog-layout">
+    <aside class="sidebar">
+      <div class="filter-section">
+        <div class="filter-title">種類</div>
+        <div id="filterTypeSection">
+          <div class="filter-item active" onclick="setFilter(this,'type','all')"><span>すべて</span><span class="filter-count">-</span></div>
+        </div>
       </div>
-      <div class="hero-stats">
-        <div class="stat"><span class="stat-num" data-count="1500">0</span><span>+</span><p>銘柄</p></div>
-        <div class="stat-divider"></div>
-        <div class="stat"><span class="stat-num" data-count="300">0</span><span>+</span><p>蔵元</p></div>
-        <div class="stat-divider"></div>
-        <div class="stat"><span class="stat-num" data-count="47">0</span><span></span><p>都道府県</p></div>
+      <div class="filter-divider"></div>
+      <div class="filter-section">
+        <div class="filter-title">産地</div>
+        <div id="filterRegionSection"><div style="padding:8px 14px;font-size:12px;color:#b0a090">読み込み中…</div></div>
+      </div>
+      <div class="filter-divider"></div>
+      <div class="filter-section">
+        <div class="filter-title">味わい</div>
+        <div id="filterTasteSection"><div style="padding:8px 14px;font-size:12px;color:#b0a090">読み込み中…</div></div>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="main-toolbar">
+        <div class="result-count"><strong id="countDisplay">-</strong> 件</div>
+        <select class="sort-select" id="sortSelect" onchange="renderCards()">
+          <option value="default">おすすめ順</option>
+          <option value="name">名前順</option>
+        </select>
+      </div>
+      <div class="card-grid" id="cardGrid">
+        <div style="grid-column:1/-1;padding:40px;text-align:center;color:#8a7a6a">読み込み中…</div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== DETAIL ===== -->
+<div id="page-detail" class="page">
+  <div class="detail-layout">
+    <div class="detail-image-col">
+      <div class="detail-label" id="detailLabel"></div>
+    </div>
+    <div class="detail-info-col">
+      <button class="back-btn" id="detailBackBtn" onclick="goBack()">← 戻る</button>
+      <div class="detail-kura" id="detailKura"></div>
+      <div class="detail-name" id="detailName"></div>
+      <div class="detail-tags" id="detailTags"></div>
+      <table class="spec-table" id="detailSpec"></table>
+      <div class="pairing-section">
+        <div class="section-label" id="detailPairingLabel">説明</div>
+        <div class="pairing-items" id="detailPairing"></div>
+      </div>
+      <div class="detail-price" id="detailPrice"></div>
+      <div class="detail-actions">
+        <button class="btn-ec" id="detailEcBtn">ECサイトで購入する →</button>
+        <button class="btn-fav" id="detailFavBtn" onclick="toggleDetailFav()">♡</button>
       </div>
     </div>
-    <div class="hero-bottle">
-      <div class="bottle-glow"></div>
-      <svg class="bottle-svg" viewBox="0 0 120 320" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="bottleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   style="stop-color:#1a1015" />
-            <stop offset="40%"  style="stop-color:#2a1f25" />
-            <stop offset="60%"  style="stop-color:#3a2a30" />
-            <stop offset="100%" style="stop-color:#1a1015" />
-          </linearGradient>
-          <linearGradient id="capGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   style="stop-color:#8a7040" />
-            <stop offset="50%"  style="stop-color:#c9a84c" />
-            <stop offset="100%" style="stop-color:#8a7040" />
-          </linearGradient>
-          <linearGradient id="labelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%"   style="stop-color:#1a0f12" />
-            <stop offset="100%" style="stop-color:#0d080a" />
-          </linearGradient>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
-        <rect x="44" y="0" width="32" height="8" rx="4" fill="url(#capGrad)" />
-        <path d="M44 8 L38 40 L82 40 L76 8Z" fill="url(#bottleGrad)" />
-        <line x1="44" y1="8" x2="38" y2="40" stroke="#c9a84c" stroke-width="0.5" opacity="0.4"/>
-        <line x1="76" y1="8" x2="82" y2="40" stroke="#c9a84c" stroke-width="0.5" opacity="0.4"/>
-        <path d="M38 40 Q20 60 20 80 L100 80 Q100 60 82 40Z" fill="url(#bottleGrad)" />
-        <rect x="20" y="80" width="80" height="220" rx="4" fill="url(#bottleGrad)" />
-        <rect x="24" y="85" width="8"  height="210" rx="4" fill="white" opacity="0.04" />
-        <rect x="25" y="110" width="70" height="150" rx="2" fill="url(#labelGrad)" stroke="#c9a84c" stroke-width="0.8" />
-        <line x1="28" y1="120" x2="92" y2="120" stroke="#c9a84c" stroke-width="0.5" opacity="0.6"/>
-        <line x1="28" y1="250" x2="92" y2="250" stroke="#c9a84c" stroke-width="0.5" opacity="0.6"/>
-        <text x="60" y="148" text-anchor="middle" font-family="'Noto Serif JP'" font-size="18" fill="#c9a84c" filter="url(#glow)">純米</text>
-        <text x="60" y="170" text-anchor="middle" font-family="'Noto Serif JP'" font-size="10" fill="#c9a84c" opacity="0.8">大吟醸</text>
-        <text x="60" y="195" text-anchor="middle" font-family="Cinzel" font-size="7"  fill="#c9a84c" opacity="0.6" letter-spacing="2">SAKE FIND</text>
-        <text x="60" y="220" text-anchor="middle" font-family="'Noto Serif JP'" font-size="8" fill="#8a7060" opacity="0.8">醸造元　幸酒造</text>
-        <text x="60" y="238" text-anchor="middle" font-family="'Noto Serif JP'" font-size="8" fill="#8a7060" opacity="0.8">新潟県</text>
-        <line x1="20" y1="95"  x2="100" y2="95"  stroke="#c9a84c" stroke-width="0.3" opacity="0.3"/>
-        <line x1="20" y1="290" x2="100" y2="290" stroke="#c9a84c" stroke-width="0.3" opacity="0.3"/>
-        <rect x="20" y="296" width="80" height="4" rx="2" fill="#0f0a0c" />
-      </svg>
-    </div>
-    <div class="hero-scroll-hint">
-      <span>SCROLL</span>
-      <div class="scroll-line"></div>
-    </div>
-  </section>
+  </div>
+</div>
 
-  <!-- ═══════════════════════════ SERVICES ═══════════════════════════ -->
-  <section class="section" id="services">
-    <div class="container">
-      <div class="section-header reveal">
-        <p class="section-eyebrow">FEATURES</p>
-        <h2 class="section-title">6つの体験</h2>
-        <p class="section-desc">SakeFindが提供する、日本酒との新しい出会い方</p>
+<!-- ===== AI診断 ===== -->
+<div id="page-ai" class="page">
+  <div class="tab-content" style="max-width:860px">
+    <div class="tab-title">AI 味覚診断</div>
+    <div class="tab-subtitle">5つの質問に答えるだけで、あなたの味覚にマッチする小規模蔵元の銘柄を3本ご提案します。</div>
+    <div class="ai-small-badge">対象：年間200石以下の小規模蔵元銘柄のみ</div>
+    <button class="ai-start-btn" id="aiStartBtn" onclick="startQuiz()">診断をはじめる →</button>
+    <div class="ai-quiz" id="aiQuiz">
+      <div class="quiz-steps-indicator" id="quizDots"></div>
+      <div class="quiz-step" id="quizStep">
+        <div class="quiz-progress" id="quizProgress"></div>
+        <div class="quiz-q" id="quizQuestion"></div>
+        <div class="quiz-options" id="quizOptions"></div>
       </div>
-      <div class="services-grid">
+      <div class="quiz-analyzing" id="quizAnalyzing">
+        <div class="analyzing-spinner"></div>
+        <div style="font-size:15px;font-weight:bold;color:#1a0a00;margin-bottom:5px">味覚プロファイルを解析中…</div>
+        <div style="font-size:12px;color:#8a7a6a">あなたの好みにぴったりの銘柄を探しています</div>
+      </div>
+      <div class="quiz-result" id="quizResult">
+        <div class="quiz-result-title">あなたにおすすめの3銘柄</div>
+        <div class="quiz-result-sub" id="quizResultSub"></div>
+        <div class="result-cards" id="resultCards"></div>
+        <div style="text-align:center">
+          <button class="quiz-retry-btn" onclick="retryQuiz()">もう一度診断する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-        <div class="service-card reveal" data-delay="0">
-          <div class="service-num">01</div>
-          <div class="service-icon">
-            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="22" r="10" fill="none" stroke="#c9a84c" stroke-width="1.5"/><path d="M24 32 L24 46" stroke="#c9a84c" stroke-width="1.5"/><path d="M16 46 L32 46" stroke="#c9a84c" stroke-width="1.5"/><circle cx="24" cy="22" r="3" fill="#c9a84c"/></svg>
+<!-- ===== MAP ===== -->
+<div id="page-map" class="page">
+  <div class="map-layout">
+    <div class="map-sidebar">
+      <div class="map-filter-tabs">
+        <button class="map-filter-tab active" data-mtype="all" onclick="setMapFilter(this,'all')">全て</button>
+        <button class="map-filter-tab" data-mtype="brewery" onclick="setMapFilter(this,'brewery')">🏭酒蔵</button>
+        <button class="map-filter-tab" data-mtype="shop" onclick="setMapFilter(this,'shop')">🛒酒屋</button>
+        <button class="map-filter-tab" data-mtype="restaurant" onclick="setMapFilter(this,'restaurant')">🍴飲食店</button>
+      </div>
+      <div class="map-list-wrap" id="mapList">
+        <div style="padding:20px;text-align:center;color:#8a7a6a;font-size:13px">読み込み中…</div>
+      </div>
+    </div>
+    <div class="map-main">
+      <div id="mapCanvas"></div>
+      <div id="mapNoKey" class="map-nokey">
+        <div class="map-nokey-icon">🗺</div>
+        <div class="map-nokey-title">マップを表示するには API キーが必要です</div>
+        <div class="map-nokey-sub">index.html 上部の <code>GOOGLE_MAPS_API_KEY</code> に<br>Google Maps JavaScript API キーを入力してください。<br>マップなしでも下の店舗リストは利用できます。</div>
+        <button class="map-locate-btn" onclick="loadMapLocations()">店舗リストを読み込む</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCAN ===== -->
+<div id="page-scan" class="page">
+  <div class="scan-wrap">
+    <div class="scan-header">
+      <div class="tab-title">ラベルスキャン</div>
+      <div class="tab-subtitle">日本酒のラベルを撮影・アップロードして銘柄を自動認識します。</div>
+    </div>
+    <div id="scanNoKey" class="scan-nokey" style="display:none">
+      ⚠️ Anthropic API キーが設定されていません。index.html の <code>ANTHROPIC_API_KEY</code> に入力してください。
+    </div>
+    <div class="scan-area">
+      <div class="scan-drop-zone" onclick="document.getElementById('fileInput').click()">
+        <div class="scan-icon-big">📸</div>
+        <div class="scan-drop-text">ラベル画像をアップロード</div>
+        <div class="scan-drop-sub">JPG・PNG に対応（最大10MB）</div>
+        <button class="scan-file-btn" onclick="event.stopPropagation();document.getElementById('fileInput').click()">ファイルを選択</button>
+        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileScan(this)">
+      </div>
+      <div class="scan-camera-box">
+        <div class="scan-camera-icon">📷</div>
+        <div style="font-size:13px;font-weight:bold;color:#1a0a00">カメラで撮影</div>
+        <button class="scan-camera-btn" onclick="openCamera()">カメラを起動</button>
+      </div>
+    </div>
+    <div class="scan-video-wrap" id="scanVideoWrap">
+      <video id="scanVideo" autoplay playsinline></video>
+      <button class="scan-capture-btn" onclick="captureFrame()">📸 撮影する</button>
+    </div>
+    <canvas id="scanCanvas"></canvas>
+    <div class="scan-loading" id="scanLoading">
+      <div class="analyzing-spinner" style="margin:0 auto 12px"></div>
+      <div style="font-size:14px;font-weight:bold;color:#1a0a00">ラベルを解析中…</div>
+      <div style="font-size:12px;color:#8a7a6a;margin-top:4px">AI が銘柄を認識しています</div>
+    </div>
+    <div class="scan-result-card" id="scanResultCard">
+      <img id="scanResultImg" class="scan-result-img" src="" alt="">
+      <div class="scan-result-info">
+        <div class="scan-recognized">✓ 銘柄を認識しました</div>
+        <div class="scan-sake-name" id="scanSakeName"></div>
+        <div class="scan-sake-brewery" id="scanSakeBrewery"></div>
+        <div class="scan-pairing">
+          <div class="scan-pairing-title">ペアリング提案</div>
+          <div class="scan-pairing-chips" id="scanPairingChips"></div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-buy-result" id="scanDetailBtn" style="flex:1">詳しく見る →</button>
+          <a class="btn-buy-result" id="scanEcLink" target="_blank" rel="noopener" style="flex:1;display:flex;align-items:center;justify-content:center;text-decoration:none">購入 ↗</a>
+        </div>
+      </div>
+    </div>
+    <div class="scan-not-found" id="scanNotFound">
+      登録されていない銘柄です。別のラベルをお試しください。
+    </div>
+  </div>
+</div>
+
+<!-- ===== TIMELINE ===== -->
+<div id="page-timeline" class="page">
+  <div class="timeline-layout">
+    <div class="timeline-header">
+      <div class="timeline-tabs">
+        <button class="tl-tab active" id="tlTabPublic" onclick="setTimelineTab('public')">みんなの投稿</button>
+        <button class="tl-tab" id="tlTabMine" onclick="setTimelineTab('mine')">マイ投稿</button>
+      </div>
+      <button class="tl-post-btn" onclick="openPostForm()">＋ 投稿</button>
+    </div>
+    <div id="timelinePosts" class="timeline-posts">
+      <div class="tl-loading">読み込み中…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== POST MODAL ===== -->
+<div class="modal-overlay" id="postModal" onclick="if(event.target===this)closePostForm()">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">投稿する</div>
+      <button class="modal-close" onclick="closePostForm()">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">写真 <span class="req">*</span></label>
+      <div class="photo-upload-area" onclick="document.getElementById('postPhotoInput').click()">
+        <input type="file" id="postPhotoInput" accept="image/*" style="display:none" onchange="previewPostPhoto(this)">
+        <img id="postPhotoPreview" src="" alt="">
+        <div class="photo-upload-placeholder" id="postPhotoPlaceholder">
+          <div>📷</div>
+          <div>写真を選択（必須）</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">銘柄（任意）</label>
+      <select class="form-select" id="postSakeSelect">
+        <option value="">銘柄を選択…</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">コメント <span class="req">*</span></label>
+      <textarea class="form-textarea" id="postComment" placeholder="飲んだ感想を書いてください…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">飲んだ場所</label>
+      <div class="radio-group">
+        <label class="radio-label">
+          <input type="radio" name="locationType" value="restaurant" onchange="toggleLocationSelect()"> 飲食店
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="locationType" value="home" checked onchange="toggleLocationSelect()"> 自宅
+        </label>
+      </div>
+    </div>
+    <div class="form-group" id="restaurantSelectGroup" style="display:none">
+      <label class="form-label">店名</label>
+      <select class="form-select" id="postLocationSelect">
+        <option value="">店舗を選択…</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">公開設定</label>
+      <div class="toggle-row">
+        <span id="publicToggleLabel">公開</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="postIsPublic" checked onchange="updatePublicLabel()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+    <button class="submit-btn" id="postSubmitBtn" onclick="submitPost()">投稿する</button>
+  </div>
+</div>
+
+<!-- ===== BOTTOM NAV ===== -->
+<div class="bottom-nav">
+  <button class="bnav-btn active" data-tab="catalog" onclick="showTab('catalog')">
+    <span>🔍</span><span>検索</span>
+  </button>
+  <button class="bnav-btn" data-tab="ai" onclick="showTab('ai')">
+    <span>✨</span><span>AI診断</span>
+  </button>
+  <button class="bnav-btn" data-tab="map" onclick="showTab('map')">
+    <span>🗺</span><span>マップ</span>
+  </button>
+  <button class="bnav-btn" data-tab="scan" onclick="showTab('scan')">
+    <span>📷</span><span>スキャン</span>
+  </button>
+  <button class="bnav-btn" data-tab="timeline" onclick="showTab('timeline')">
+    <span>📱</span><span>タイムライン</span>
+  </button>
+</div>
+
+<script>
+// ──────────────────────────────────────────────────────
+// USER SESSION
+// ──────────────────────────────────────────────────────
+let currentUserId = localStorage.getItem('sf_uid');
+if (!currentUserId) {
+  currentUserId = 'u_' + Math.random().toString(36).slice(2, 11);
+  localStorage.setItem('sf_uid', currentUserId);
+}
+let currentUserName = localStorage.getItem('sf_uname') || 'ゲスト';
+
+function showUserMenu() {
+  const name = prompt('表示名を入力してください', currentUserName);
+  if (name && name.trim()) {
+    currentUserName = name.trim();
+    localStorage.setItem('sf_uname', currentUserName);
+    alert('表示名を「' + currentUserName + '」に設定しました');
+  }
+}
+
+// ──────────────────────────────────────────────────────
+// COLOR PALETTE
+// ──────────────────────────────────────────────────────
+const COLORS = [
+  { c0:'#0a0520', c1:'#1a0a40', tc:'#c8d8f0', ac:'#8090e0' },
+  { c0:'#001020', c1:'#002840', tc:'#c0e8ff', ac:'#60b0e0' },
+  { c0:'#200a00', c1:'#401500', tc:'#ffe0c0', ac:'#e0a060' },
+  { c0:'#102008', c1:'#1a3010', tc:'#c8f0c8', ac:'#70c070' },
+  { c0:'#001a20', c1:'#002a35', tc:'#b0e0f0', ac:'#50c0e0' },
+  { c0:'#200020', c1:'#380038', tc:'#f0c8f8', ac:'#c070d8' },
+  { c0:'#101a00', c1:'#1a2a00', tc:'#d8f0a0', ac:'#a0d040' },
+  { c0:'#001818', c1:'#002828', tc:'#a0f0e8', ac:'#40c8b8' },
+];
+const TASTE_LABEL = { umami:'旨味', acid:'酸味', sweet:'甘み', bitter:'苦味', rich:'濃醇' };
+const TASTE_KEYS  = ['umami', 'acid', 'sweet', 'bitter', 'rich'];
+
+function dbRowToSake(row, idx) {
+  const col = COLORS[idx % COLORS.length];
+  const tp = (typeof row.taste_profile === 'object' && row.taste_profile !== null) ? row.taste_profile : {};
+  const tastes = Object.entries(tp).sort((a,b) => b[1]-a[1]).filter(([,v]) => v >= 3).map(([k]) => TASTE_LABEL[k] ?? k);
+  return {
+    id: row.id, name: row.name ?? '（名称不明）', kura: row.brewery ?? '',
+    region: row.prefecture ?? '', type: row.type ?? '', taste_profile: tp, tastes,
+    description: row.description ?? '', image_url: row.image_url ?? null,
+    ec_url: row.ec_url ?? null, is_small_brewery: row.is_small_brewery ?? true,
+    ...col,
+  };
+}
+
+// ──────────────────────────────────────────────────────
+// GLOBAL STATE
+// ──────────────────────────────────────────────────────
+let sakes = [];
+let smallBrewerySakes = [];
+const filters = { type: 'all', region: null, taste: null };
+const liked = new Set();
+let currentId = null;
+let prevTab = 'catalog';
+
+// ──────────────────────────────────────────────────────
+// NAVIGATION
+// ──────────────────────────────────────────────────────
+function showTab(tab) {
+  if (tab !== 'detail') prevTab = tab;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  window.scrollTo(0, 0);
+  if (tab === 'catalog') renderCards();
+  if (tab === 'map' && !mapLoaded) initMap();
+  else if (tab === 'map' && googleMap) google.maps.event.trigger(googleMap, 'resize');
+  if (tab === 'timeline' && !tlLoaded) { tlLoaded = true; loadTimeline(); }
+  if (tab === 'scan') checkScanApiKey();
+}
+
+function goBack() { showTab(prevTab); }
+
+// ──────────────────────────────────────────────────────
+// SUPABASE: SAKES
+// ──────────────────────────────────────────────────────
+async function initSakes() {
+  try {
+    const { data, error } = await sb.from('sakes').select('*').order('id');
+    if (error) throw error;
+    sakes = (data ?? []).map((row, i) => dbRowToSake(row, i));
+    smallBrewerySakes = sakes.filter(s => s.is_small_brewery !== false);
+  } catch (e) {
+    document.getElementById('cardGrid').innerHTML =
+      `<div style="grid-column:1/-1;padding:40px;text-align:center;color:#c04040">読み込みエラー: ${e.message}</div>`;
+    return;
+  }
+  buildSidebarFilters();
+  renderCards();
+  populatePostSakeSelect();
+}
+
+function buildSidebarFilters() {
+  const types = [...new Set(sakes.map(s => s.type).filter(Boolean))].sort();
+  document.getElementById('filterTypeSection').innerHTML =
+    `<div class="filter-item active" onclick="setFilter(this,'type','all')"><span>すべて</span><span class="filter-count">${sakes.length}</span></div>` +
+    types.map(t => {
+      const n = sakes.filter(s => s.type === t).length;
+      return `<div class="filter-item" data-val="${t}" onclick="setFilter(this,'type','${t}')"><span>${t}</span><span class="filter-count">${n}</span></div>`;
+    }).join('');
+
+  const regions = [...new Set(sakes.map(s => s.region).filter(Boolean))].sort();
+  document.getElementById('filterRegionSection').innerHTML = regions.length
+    ? regions.map(r => {
+        const n = sakes.filter(s => s.region === r).length;
+        return `<div class="filter-item" data-val="${r}" onclick="setFilter(this,'region','${r}')"><span>${r}</span><span class="filter-count">${n}</span></div>`;
+      }).join('')
+    : '<div style="padding:8px 14px;font-size:12px;color:#b0a090">データなし</div>';
+
+  const cm = {};
+  sakes.forEach(s => s.tastes.forEach(t => { cm[t] = (cm[t]||0)+1; }));
+  const topTastes = Object.entries(cm).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  document.getElementById('filterTasteSection').innerHTML = topTastes.length
+    ? topTastes.map(([t,n]) =>
+        `<div class="filter-item" data-val="${t}" onclick="setFilter(this,'taste','${t}')"><span>${t}</span><span class="filter-count">${n}</span></div>`
+      ).join('')
+    : '<div style="padding:8px 14px;font-size:12px;color:#b0a090">データなし</div>';
+}
+
+function getFiltered() {
+  let list = sakes.slice();
+  if (filters.type && filters.type !== 'all') list = list.filter(s => s.type === filters.type);
+  if (filters.region) list = list.filter(s => s.region === filters.region);
+  if (filters.taste)  list = list.filter(s => s.tastes.includes(filters.taste));
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  if (q) list = list.filter(s => (s.name + s.kura + s.region + s.type).toLowerCase().includes(q));
+  if (document.getElementById('sortSelect').value === 'name') list.sort((a,b) => a.name.localeCompare(b.name, 'ja'));
+  return list;
+}
+
+function onSearchInput() {
+  const q = document.getElementById('searchInput').value.trim();
+  const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
+  if (activeTab !== 'catalog') showTab('catalog');
+  renderCards();
+}
+
+function makeLabelHTML(s) {
+  if (s.image_url) return `<img src="${s.image_url}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover">`;
+  const parts = s.name.split(/\s+/);
+  return `
+    <div style="position:absolute;inset:0;background:linear-gradient(160deg,${s.c0},${s.c1})"></div>
+    <div style="position:relative;z-index:1;text-align:center;width:100%">
+      <div style="color:${s.ac};font-size:9px;letter-spacing:2px;margin-bottom:8px">${s.type}</div>
+      <div style="color:${s.tc};writing-mode:vertical-rl;font-size:22px;font-weight:900;letter-spacing:4px;margin:0 auto 8px;line-height:1">${parts[0]}</div>
+      ${parts[1] ? `<div style="color:${s.ac};font-size:10px;letter-spacing:2px">${parts[1]}</div>` : ''}
+      <div style="color:${s.tc};opacity:0.6;font-size:9px;margin-top:6px">${s.kura}</div>
+    </div>`;
+}
+
+function renderCards() {
+  const grid = document.getElementById('cardGrid');
+  const list = getFiltered();
+  document.getElementById('countDisplay').textContent = list.length;
+  grid.innerHTML = '';
+  if (!list.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;padding:40px;text-align:center;color:#8a7a6a">該当する銘柄がありません</div>';
+    return;
+  }
+  list.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'sake-card';
+    const tasteTags = s.tastes.slice(0,2).map(t => `<span class="tag">${t}</span>`).join('');
+    div.innerHTML = `
+      <div class="card-image">
+        <div class="card-label" style="position:relative">${makeLabelHTML(s)}</div>
+        <button class="heart-btn ${liked.has(s.id)?'liked':''}" onclick="event.stopPropagation();toggleHeart(${s.id},this)">${liked.has(s.id)?'♥':'♡'}</button>
+      </div>
+      <div class="card-body">
+        <div class="card-kura">${s.kura}${s.region?' ｜ '+s.region:''}</div>
+        <div class="card-name">${s.name}</div>
+        <div class="card-tags">${s.type?`<span class="tag">${s.type}</span>`:''}${tasteTags}</div>
+        <div class="card-footer">
+          <div style="font-size:12px;color:#6a5040">詳細を見る</div>
+          ${s.ec_url
+            ? `<a href="${s.ec_url}" target="_blank" rel="noopener" class="btn-buy" onclick="event.stopPropagation()">購入</a>`
+            : `<button class="btn-buy" onclick="event.stopPropagation();showDetail(${s.id})">詳細</button>`}
+        </div>
+      </div>`;
+    div.addEventListener('click', () => showDetail(s.id));
+    grid.appendChild(div);
+  });
+}
+
+function toggleHeart(id, btn) {
+  if (liked.has(id)) { liked.delete(id); btn.classList.remove('liked'); btn.textContent='♡'; }
+  else               { liked.add(id);    btn.classList.add('liked');    btn.textContent='♥'; }
+}
+
+function setFilter(el, key, val) {
+  const sec = el.closest('[id^="filter"]');
+  if (sec) sec.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
+  if (val === 'all' || filters[key] === val) {
+    filters[key] = val === 'all' ? 'all' : null;
+  } else {
+    filters[key] = val;
+    el.classList.add('active');
+  }
+  if (val === 'all') el.classList.add('active');
+  renderCards();
+}
+
+// ──────────────────────────────────────────────────────
+// DETAIL
+// ──────────────────────────────────────────────────────
+function showDetail(id) {
+  const s = sakes.find(x => x.id === id);
+  if (!s) return;
+  currentId = id;
+
+  if (s.image_url) {
+    document.getElementById('detailLabel').innerHTML =
+      `<img src="${s.image_url}" alt="${s.name}" style="width:100%;height:100%;object-fit:contain;border-radius:8px">`;
+  } else {
+    const parts = s.name.split(/\s+/);
+    document.getElementById('detailLabel').innerHTML = `
+      <div style="position:absolute;inset:0;background:linear-gradient(160deg,${s.c0},${s.c1});border-radius:8px"></div>
+      <div style="position:relative;z-index:1;text-align:center">
+        <div style="color:${s.ac};font-size:11px;letter-spacing:3px;margin-bottom:12px">${s.type}</div>
+        <div style="color:${s.tc};writing-mode:vertical-rl;font-size:34px;font-weight:900;letter-spacing:8px;margin:0 auto 12px;line-height:1">${parts[0]}</div>
+        <div style="color:${s.ac};font-size:13px;letter-spacing:4px">${parts[1]||''}</div>
+        <div style="color:${s.tc};opacity:0.6;font-size:11px;margin-top:10px">${s.kura}</div>
+      </div>`;
+  }
+
+  document.getElementById('detailKura').textContent = [s.kura, s.region].filter(Boolean).join(' ｜ ');
+  document.getElementById('detailName').textContent = s.name;
+  document.getElementById('detailTags').innerHTML = [s.type, ...s.tastes].filter(Boolean).map(t => `<span class="tag">${t}</span>`).join('');
+
+  const bars = Object.entries(s.taste_profile).map(([k,v]) => `
+    <tr><td>${TASTE_LABEL[k]??k}</td><td>
+      <div style="display:flex;align-items:center;gap:5px">
+        <div style="flex:1;height:5px;background:#e8d8c0;border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${v*20}%;background:var(--accent);border-radius:3px"></div>
+        </div>
+        <span style="font-size:10px;color:#8a7a6a;width:10px">${v}</span>
+      </div>
+    </td></tr>`).join('');
+  document.getElementById('detailSpec').innerHTML =
+    (s.type   ? `<tr><td>種類</td><td>${s.type}</td></tr>` : '') +
+    (s.region ? `<tr><td>産地</td><td>${s.region}</td></tr>` : '') +
+    (s.kura   ? `<tr><td>蔵元</td><td>${s.kura}</td></tr>` : '') + bars;
+
+  const pairingEl = document.getElementById('detailPairing');
+  if (s.description) {
+    document.getElementById('detailPairingLabel').textContent = '説明';
+    pairingEl.innerHTML = `<p style="font-size:13px;color:#3a2510;line-height:1.7">${s.description}</p>`;
+  } else {
+    document.getElementById('detailPairingLabel').textContent = 'ペアリング';
+    pairingEl.innerHTML = makePairingChips(s.taste_profile);
+  }
+
+  document.getElementById('detailPrice').textContent = 'ECサイトで価格を確認';
+  const ecBtn = document.getElementById('detailEcBtn');
+  if (s.ec_url) {
+    ecBtn.onclick = () => window.open(s.ec_url, '_blank', 'noopener');
+    ecBtn.textContent = 'ECサイトで購入する →';
+    ecBtn.disabled = false; ecBtn.style.opacity = '1';
+  } else {
+    ecBtn.onclick = null; ecBtn.textContent = 'ECサイト未登録';
+    ecBtn.disabled = true; ecBtn.style.opacity = '0.5';
+  }
+
+  const fb = document.getElementById('detailFavBtn');
+  fb.textContent = liked.has(id) ? '♥' : '♡';
+  fb.className = 'btn-fav' + (liked.has(id) ? ' liked' : '');
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-detail').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function toggleDetailFav() {
+  const fb = document.getElementById('detailFavBtn');
+  if (liked.has(currentId)) { liked.delete(currentId); fb.textContent='♡'; fb.className='btn-fav'; }
+  else { liked.add(currentId); fb.textContent='♥'; fb.className='btn-fav liked'; }
+}
+
+function makePairingChips(tp) {
+  const pairs = [];
+  if ((tp.umami||0) >= 3) pairs.push('刺身', '煮物');
+  if ((tp.acid||0)  >= 3) pairs.push('牡蠣', '白身魚');
+  if ((tp.sweet||0) >= 3) pairs.push('和菓子', '前菜');
+  if ((tp.bitter||0)>= 3) pairs.push('チーズ', '燻製');
+  if ((tp.rich||0)  >= 3) pairs.push('肉料理', '濃い味付け');
+  if (!pairs.length)       pairs.push('和食全般');
+  return [...new Set(pairs)].slice(0,5).map(p => `<span class="pairing-item">${p}</span>`).join('');
+}
+
+// ──────────────────────────────────────────────────────
+// AI QUIZ
+// ──────────────────────────────────────────────────────
+const QUIZ_DATA = [
+  { q:'どんな味が好き？', opts:[
+    { label:'フルーティで甘い',     icon:'🍯', v:{umami:1,acid:2,sweet:5,bitter:1,rich:2} },
+    { label:'辛口でキレがある',     icon:'⚡', v:{umami:2,acid:2,sweet:1,bitter:4,rich:2} },
+    { label:'濃厚でどっしり',       icon:'🌰', v:{umami:5,acid:1,sweet:2,bitter:3,rich:5} },
+    { label:'酸味があってさっぱり', icon:'🍋', v:{umami:2,acid:5,sweet:3,bitter:2,rich:2} },
+  ]},
+  { q:'普段どんなお酒を飲む？', opts:[
+    { label:'ビール・ハイボール', icon:'🍺', v:{umami:2,acid:3,sweet:2,bitter:4,rich:2} },
+    { label:'ワイン・シャンパン', icon:'🍷', v:{umami:2,acid:4,sweet:3,bitter:2,rich:3} },
+    { label:'焼酎・ウイスキー',   icon:'🥃', v:{umami:4,acid:1,sweet:2,bitter:3,rich:5} },
+    { label:'あまり飲まない',     icon:'🌱', v:{umami:2,acid:2,sweet:4,bitter:1,rich:2} },
+  ]},
+  { q:'食事との合わせ方は？', opts:[
+    { label:'魚介・和食に合わせたい',  icon:'🍣', v:{umami:5,acid:3,sweet:2,bitter:1,rich:3} },
+    { label:'肉料理に合わせたい',      icon:'🥩', v:{umami:3,acid:2,sweet:2,bitter:3,rich:5} },
+    { label:'単体でゆっくり楽しみたい',icon:'🕯', v:{umami:3,acid:3,sweet:3,bitter:3,rich:3} },
+    { label:'料理を選ばず飲みたい',    icon:'🍽', v:{umami:3,acid:2,sweet:3,bitter:2,rich:3} },
+  ]},
+  { q:'アルコールの強さは？', opts:[
+    { label:'軽め（13度以下）',    icon:'🌊', v:{umami:2,acid:2,sweet:4,bitter:1,rich:2} },
+    { label:'普通（14〜15度）',    icon:'🌿', v:{umami:3,acid:2,sweet:3,bitter:2,rich:3} },
+    { label:'しっかり（16度以上）',icon:'🔥', v:{umami:4,acid:2,sweet:2,bitter:3,rich:4} },
+    { label:'何でもいい',          icon:'✨', v:{umami:3,acid:2,sweet:3,bitter:2,rich:3} },
+  ]},
+  { q:'どんな場面で飲む？', opts:[
+    { label:'一人でリラックス',   icon:'🛋', v:{umami:3,acid:3,sweet:3,bitter:2,rich:3} },
+    { label:'友人と賑やかに',     icon:'🥂', v:{umami:2,acid:2,sweet:4,bitter:2,rich:3} },
+    { label:'大切な人への贈り物', icon:'🎁', v:{umami:3,acid:2,sweet:3,bitter:2,rich:4} },
+    { label:'食事のお供に',       icon:'🍴', v:{umami:5,acid:3,sweet:2,bitter:2,rich:3} },
+  ]},
+];
+
+let quizStep = 0;
+let userVector = { umami:0, acid:0, sweet:0, bitter:0, rich:0 };
+
+function startQuiz() {
+  quizStep = 0;
+  userVector = { umami:0, acid:0, sweet:0, bitter:0, rich:0 };
+  document.getElementById('aiStartBtn').style.display = 'none';
+  document.getElementById('aiQuiz').classList.add('active');
+  document.getElementById('quizResult').classList.remove('active');
+  document.getElementById('quizAnalyzing').classList.remove('active');
+  renderQuizStep();
+}
+
+function retryQuiz() {
+  document.getElementById('aiStartBtn').style.display = 'block';
+  document.getElementById('aiQuiz').classList.remove('active');
+  document.getElementById('quizResult').classList.remove('active');
+}
+
+function renderQuizStep() {
+  const d = QUIZ_DATA[quizStep];
+  const total = QUIZ_DATA.length;
+  document.getElementById('quizDots').innerHTML = Array.from({length:total},(_,i) =>
+    `<div class="step-dot ${i<quizStep?'done':i===quizStep?'active':''}"></div>`).join('');
+  document.getElementById('quizProgress').textContent = `質問 ${quizStep+1} / ${total}`;
+  document.getElementById('quizQuestion').textContent = d.q;
+  document.getElementById('quizOptions').innerHTML = d.opts.map((o,i) => `
+    <button class="quiz-option" onclick="answerQuiz(${i})">
+      <span class="opt-icon">${o.icon}</span>${o.label}
+    </button>`).join('');
+  document.getElementById('quizStep').style.display = 'block';
+}
+
+function answerQuiz(i) {
+  document.querySelectorAll('.quiz-option')[i].classList.add('selected');
+  document.querySelectorAll('.quiz-option').forEach(b => b.disabled = true);
+  const v = QUIZ_DATA[quizStep].opts[i].v;
+  TASTE_KEYS.forEach(k => { userVector[k] += v[k]; });
+  quizStep++;
+  if (quizStep < QUIZ_DATA.length) setTimeout(renderQuizStep, 380);
+  else setTimeout(showAnalyzing, 380);
+}
+
+function showAnalyzing() {
+  document.getElementById('quizStep').style.display = 'none';
+  document.getElementById('quizAnalyzing').classList.add('active');
+  setTimeout(showQuizResult, 1400);
+}
+
+function cosineSimilarity(a, b) {
+  let dot = 0, na = 0, nb = 0;
+  TASTE_KEYS.forEach(k => {
+    dot += (a[k]??0)*(b[k]??0);
+    na  += (a[k]??0)**2;
+    nb  += (b[k]??0)**2;
+  });
+  return na && nb ? dot / (Math.sqrt(na)*Math.sqrt(nb)) : 0;
+}
+
+function showQuizResult() {
+  document.getElementById('quizAnalyzing').classList.remove('active');
+  const pool = smallBrewerySakes.length ? smallBrewerySakes : sakes;
+
+  if (!pool.length) {
+    document.getElementById('quizResult').classList.add('active');
+    document.getElementById('resultCards').innerHTML =
+      '<p style="color:#c04040;grid-column:1/-1">銘柄データを読み込み中です。カタログを一度開いてから再度お試しください。</p>';
+    return;
+  }
+
+  const ranked = pool.map(s => ({
+    sake: s, score: cosineSimilarity(userVector, s.taste_profile ?? {})
+  })).sort((a,b) => b.score - a.score).slice(0, 3);
+
+  const topTaste = TASTE_KEYS.reduce((a,k) => userVector[k]>userVector[a]?k:a, TASTE_KEYS[0]);
+  document.getElementById('quizResultSub').textContent =
+    `あなたの味覚プロファイル：${TASTE_LABEL[topTaste]}重視タイプ。相性スコア順に表示（小規模蔵元限定）。`;
+
+  const rankStyles = [
+    { cls:'rank-1', badge:'gold',   label:'🥇 1位' },
+    { cls:'rank-2', badge:'silver', label:'🥈 2位' },
+    { cls:'rank-3', badge:'bronze', label:'🥉 3位' },
+  ];
+
+  document.getElementById('resultCards').innerHTML = ranked.map(({sake:s, score}, idx) => {
+    const pct = Math.round(score*100);
+    const r = rankStyles[idx];
+    const bars = TASTE_KEYS.map(k => `
+      <div class="result-taste-row">
+        <span class="result-taste-label">${TASTE_LABEL[k]}</span>
+        <div class="result-taste-track"><div class="result-taste-fill" style="width:${(s.taste_profile?.[k]??0)*20}%"></div></div>
+      </div>`).join('');
+    const lbl = s.image_url
+      ? `<img src="${s.image_url}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover">`
+      : `<div style="width:100%;height:100%;background:linear-gradient(160deg,${s.c0},${s.c1});display:flex;align-items:center;justify-content:center">
+           <span style="color:${s.tc};writing-mode:vertical-rl;font-size:20px;font-weight:900;letter-spacing:4px">${s.name.split(/\s+/)[0]}</span>
+         </div>`;
+    return `
+      <div class="result-card ${r.cls}">
+        <span class="rank-badge ${r.badge}">${r.label}</span>
+        <div class="result-label">${lbl}<span class="match-score">一致度 ${pct}%</span></div>
+        <div class="result-card-body">
+          <div class="result-card-kura">${s.kura}${s.region?' ｜ '+s.region:''}</div>
+          <div class="result-card-name">${s.name}</div>
+          <div class="result-taste-bars">${bars}</div>
+          ${s.description ? `<div class="result-desc">${s.description}</div>` : ''}
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <button class="btn-buy-result" style="flex:1" onclick="showDetail(${s.id})">詳しく見る →</button>
+            ${s.ec_url ? `<a href="${s.ec_url}" target="_blank" rel="noopener"
+              style="display:flex;align-items:center;padding:0 10px;background:#f0e8dc;color:#5a3a20;border-radius:6px;font-size:11px;font-weight:bold;text-decoration:none;border:1px solid #d4c4a8;white-space:nowrap">購入↗</a>` : ''}
           </div>
-          <h3>店舗マップ</h3>
-          <p>全国の日本酒取扱い店舗・酒蔵を地図上で一覧。現在地から最寄りの名店を即検索。</p>
-          <a href="#map" class="service-link">地図を開く →</a>
         </div>
+      </div>`;
+  }).join('');
 
-        <div class="service-card reveal" data-delay="100">
-          <div class="service-num">02</div>
-          <div class="service-icon">
-            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="18" fill="none" stroke="#c9a84c" stroke-width="1.5"/><path d="M18 24 L22 28 L30 18" stroke="#c9a84c" stroke-width="1.5" fill="none"/><path d="M8 24 Q16 16 24 24 Q32 32 40 24" stroke="#c9a84c" stroke-width="1" fill="none" opacity="0.5"/></svg>
-          </div>
-          <h3>AI味覚診断</h3>
-          <p>5つの質問に答えるだけ。AIがあなたの味覚プロファイルを分析し、ぴったりの銘柄をレコメンド。</p>
-          <a href="#ai-diagnosis" class="service-link">診断する →</a>
-        </div>
+  document.getElementById('quizResult').classList.add('active');
+}
 
-        <div class="service-card reveal" data-delay="200">
-          <div class="service-num">03</div>
-          <div class="service-icon">
-            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><line x1="12" y1="12" x2="12" y2="40" stroke="#c9a84c" stroke-width="1.5"/><circle cx="12" cy="12" r="3" fill="#c9a84c"/><circle cx="12" cy="24" r="3" fill="#c9a84c" opacity="0.6"/><circle cx="12" cy="36" r="3" fill="#c9a84c" opacity="0.3"/><line x1="15" y1="12" x2="38" y2="12" stroke="#c9a84c" stroke-width="1"/><line x1="15" y1="24" x2="34" y2="24" stroke="#c9a84c" stroke-width="1" opacity="0.6"/><line x1="15" y1="36" x2="30" y2="36" stroke="#c9a84c" stroke-width="1" opacity="0.3"/></svg>
-          </div>
-          <h3>タイムライン</h3>
-          <p>全国のSake Finderたちのテイスティングメモが集まるSNS的フィード。新しい出会いのヒントが見つかる。</p>
-          <a href="#timeline" class="service-link">見てみる →</a>
-        </div>
+// ──────────────────────────────────────────────────────
+// MAP
+// ──────────────────────────────────────────────────────
+let mapLoaded = false;
+let googleMap = null;
+let mapMarkers = [];
+let mapLocations = [];
+let mapCurrentFilter = 'all';
 
-        <div class="service-card reveal" data-delay="300">
-          <div class="service-num">04</div>
-          <div class="service-icon">
-            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="8" width="28" height="34" rx="3" fill="none" stroke="#c9a84c" stroke-width="1.5"/><line x1="16" y1="18" x2="32" y2="18" stroke="#c9a84c" stroke-width="1"/><line x1="16" y1="24" x2="32" y2="24" stroke="#c9a84c" stroke-width="1" opacity="0.6"/><line x1="16" y1="30" x2="26" y2="30" stroke="#c9a84c" stroke-width="1" opacity="0.4"/><circle cx="33" cy="36" r="6" fill="#c9a84c" opacity="0.15" stroke="#c9a84c" stroke-width="1"/><path d="M30 36 L32 38 L36 34" stroke="#c9a84c" stroke-width="1" fill="none"/></svg>
-          </div>
-          <h3>マイ履歴</h3>
-          <p>飲んだ銘柄を記録・管理。テイスティングノートとして活用でき、自分だけの日本酒データベースを構築。</p>
-          <span class="service-link service-link-soon">近日公開</span>
-        </div>
+async function initMap() {
+  mapLoaded = true;
+  await loadMapLocations();
+  if (GOOGLE_MAPS_API_KEY) {
+    document.getElementById('mapNoKey').style.display = 'none';
+    loadGoogleMaps();
+  }
+}
 
-        <div class="service-card reveal" data-delay="400">
-          <div class="service-num">05</div>
-          <div class="service-icon">
-            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="12" width="32" height="26" rx="3" fill="none" stroke="#c9a84c" stroke-width="1.5"/><path d="M18 12 L18 8 L30 8 L30 12" stroke="#c9a84c" stroke-width="1.5" fill="none"/><circle cx="24" cy="25" r="7" fill="none" stroke="#c9a84c" stroke-width="1.2"/><circle cx="24" cy="25" r="2" fill="#c9a84c"/></svg>
-          </div>
-          <h3>ラベルスキャン</h3>
-          <p>ラベルを撮影するだけで銘柄を即認識。詳細情報・ペアリング提案・購入リンクをその場で表示。</p>
-          <a href="#label-scan" class="service-link">スキャンする →</a>
-        </div>
+async function loadMapLocations() {
+  try {
+    const { data, error } = await sb.from('locations').select('id,name,lat,lng,type,pref,sake').order('pref').limit(600);
+    if (error) throw error;
+    mapLocations = data ?? [];
+  } catch (e) {
+    mapLocations = [];
+  }
+  renderMapList();
+}
 
-        <div class="service-card reveal" data-delay="500">
-          <div class="service-num">06</div>
-          <div class="service-icon">
-            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M8 36 L16 20 L24 28 L32 16 L40 24" stroke="#c9a84c" stroke-width="1.5" fill="none"/><circle cx="40" cy="24" r="3" fill="#c9a84c"/><path d="M8 40 L40 40" stroke="#c9a84c" stroke-width="0.8" opacity="0.4"/></svg>
-          </div>
-          <h3>EC送客</h3>
-          <p>気に入った銘柄はそのままオンラインで購入。全国の酒蔵・専門店ECサイトへダイレクトに繋ぎます。</p>
-          <a href="#catalog" class="service-link">購入する →</a>
-        </div>
+function renderMapList() {
+  const list = document.getElementById('mapList');
+  const filtered = mapCurrentFilter === 'all'
+    ? mapLocations
+    : mapLocations.filter(l => l.type === mapCurrentFilter);
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:16px;font-size:13px;color:#8a7a6a">データなし</div>';
+    return;
+  }
+  const typeColors = { brewery:'#e84b4b', shop:'#4b6be8', restaurant:'#4be86a' };
+  const typeLabels = { brewery:'酒蔵', shop:'酒屋', restaurant:'飲食店' };
+  list.innerHTML = filtered.map(l => `
+    <div class="map-list-item" onclick="panToLocation(${l.id})">
+      <div class="map-list-name">
+        <span class="map-list-dot" style="background:${typeColors[l.type]||'#888'}"></span>
+        ${l.name}
+      </div>
+      <div class="map-list-meta">${l.pref || ''} ・ ${typeLabels[l.type]||l.type}${l.sake?' ・ '+l.sake:''}</div>
+    </div>`).join('');
+}
 
-      </div>
-    </div>
-  </section>
+function setMapFilter(btn, type) {
+  document.querySelectorAll('.map-filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  mapCurrentFilter = type;
+  renderMapList();
+  updateMapMarkers();
+}
 
-  <!-- ═══════════════════════════ AI DIAGNOSIS ═══════════════════════════ -->
-  <section class="section section-dark" id="ai-diagnosis">
-    <div class="container">
-      <div class="section-header reveal">
-        <p class="section-eyebrow">AI SOMMELIER</p>
-        <h2 class="section-title">AI味覚診断</h2>
-        <p class="section-desc">5つの質問で、あなただけの運命の一本を見つけます</p>
-      </div>
-      <div class="diagnosis-wrapper reveal">
-        <!-- Step dots -->
-        <div class="diag-steps-row">
-          <div class="diag-steps" id="diagSteps"></div>
-          <span class="progress-text" id="progressText">0 / 5</span>
-        </div>
-        <!-- Progress bar -->
-        <div class="progress-bar" id="progressBar">
-          <div class="progress-bar-fill" id="progressFill"></div>
-        </div>
-        <!-- Quiz -->
-        <div class="diagnosis-quiz" id="diagnosisQuiz"></div>
-        <!-- Result (replaced dynamically by JS) -->
-        <div class="diagnosis-result hidden" id="diagnosisResult"></div>
-      </div>
-    </div>
-  </section>
+function loadGoogleMaps() {
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=marker&callback=onGoogleMapsReady&language=ja&loading=async`;
+  script.async = true;
+  document.head.appendChild(script);
+}
 
-  <!-- ═══════════════════════════ CATALOG ═══════════════════════════ -->
-  <section class="section" id="catalog">
-    <div class="container">
-      <div class="section-header reveal">
-        <p class="section-eyebrow">CATALOG</p>
-        <h2 class="section-title">日本酒カタログ</h2>
-        <p class="section-desc">全国の厳選銘柄を網羅。検索・絞り込みで好みの一本を。</p>
-      </div>
-      <div class="catalog-controls reveal">
-        <div class="search-box">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-          <input type="text" id="searchInput" placeholder="銘柄名・蔵元で検索..." />
-        </div>
-        <div class="filter-group">
-          <select id="filterType">
-            <option value="">種類</option>
-            <option value="純米大吟醸">純米大吟醸</option>
-            <option value="大吟醸">大吟醸</option>
-            <option value="純米吟醸">純米吟醸</option>
-            <option value="吟醸">吟醸</option>
-            <option value="純米">純米</option>
-            <option value="本醸造">本醸造</option>
-            <option value="普通酒">普通酒</option>
-          </select>
-          <select id="filterPref">
-            <option value="">産地</option>
-            <option value="新潟">新潟</option>
-            <option value="山形">山形</option>
-            <option value="秋田">秋田</option>
-            <option value="���島">福島</option>
-            <option value="兵庫">兵庫</option>
-            <option value="京都">京都</option>
-            <option value="広島">広島</option>
-            <option value="石川">石川</option>
-            <option value="長野">長野</option>
-            <option value="山口">山口</option>
-            <option value="三重">三重</option>
-            <option value="佐賀">佐賀</option>
-          </select>
-          <select id="sortSelect">
-            <option value="featured">おすすめ順</option>
-            <option value="price_asc">価格が安い順</option>
-            <option value="price_desc">価格が高い順</option>
-            <option value="alc_desc">アルコール度数順</option>
-          </select>
-          <button class="btn-reset" id="resetFilters">リセット</button>
-        </div>
-      </div>
-      <div class="catalog-meta reveal">
-        <span id="catalogCount" class="catalog-count"></span>
-      </div>
-      <div class="catalog-grid" id="catalogGrid">
-        <div class="catalog-loading" id="catalogLoading">
-          <div class="loader"></div>
-          <p>銘柄を読み込み中...</p>
-        </div>
-      </div>
-      <div class="catalog-empty hidden" id="catalogEmpty">
-        <p>該当する銘柄が見つかりませんでした</p>
-      </div>
-    </div>
-  </section>
+window.onGoogleMapsReady = function() {
+  const defaultCenter = { lat: 35.6812, lng: 139.7671 };
+  googleMap = new google.maps.Map(document.getElementById('mapCanvas'), {
+    center: defaultCenter, zoom: 11,
+    mapId: 'DEMO_MAP_ID',
+  });
 
-  <!-- ═══════════════════════════ MAP ═══════════════════════════ -->
-  <section class="section section-dark" id="map">
-    <div class="container">
-      <div class="section-header reveal">
-        <p class="section-eyebrow">STORE MAP</p>
-        <h2 class="section-title">全国マップ</h2>
-        <p class="section-desc">全国の酒蔵・酒屋・飲食店をクリックして詳細を確認</p>
-      </div>
-      <!-- Filter toggles -->
-      <div class="map-filters reveal">
-        <button class="map-filter-btn active" data-type="brewery" onclick="toggleMapType('brewery', this)">
-          <span class="mf-dot brewery"></span>酒蔵 <span class="mf-count" id="countBrewery"></span>
-        </button>
-        <button class="map-filter-btn active" data-type="shop" onclick="toggleMapType('shop', this)">
-          <span class="mf-dot shop"></span>酒屋 <span class="mf-count" id="countShop"></span>
-        </button>
-        <button class="map-filter-btn active" data-type="restaurant" onclick="toggleMapType('restaurant', this)">
-          <span class="mf-dot restaurant"></span>飲食店 <span class="mf-count" id="countRestaurant"></span>
-        </button>
-      </div>
-      <div class="map-wrapper reveal">
-        <div id="mapContainer" class="map-container"></div>
-        <!-- Detail panel (shown on marker click) -->
-        <div class="map-panel hidden" id="mapPanel"></div>
-      </div>
-    </div>
-  </section>
+  // 非表示→表示切り替え後に地図を正しく描画させる
+  google.maps.event.trigger(googleMap, 'resize');
 
-  <!-- ═══════════════════════════ TIMELINE ═══════════════════════════ -->
-  <section class="section" id="timeline">
-    <div class="container">
-      <div class="section-header reveal">
-        <p class="section-eyebrow">COMMUNITY</p>
-        <h2 class="section-title">タイムライン</h2>
-        <p class="section-desc">全国のSake Finderたちの最新テイスティングレポート</p>
-      </div>
-      <div class="timeline-wrapper" id="timelineWrapper"></div>
-    </div>
-  </section>
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        googleMap.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        google.maps.event.trigger(googleMap, 'resize');
+      },
+      () => {} // 位置情報拒否は無視
+    );
+  }
 
-  <!-- ═══════════════════════════ LABEL SCAN ═══════════════════════════ -->
-  <section class="section section-dark" id="label-scan">
-    <div class="container">
-      <div class="section-header reveal">
-        <p class="section-eyebrow">AI VISION</p>
-        <h2 class="section-title">ラベルスキャン</h2>
-        <p class="section-desc">ラベルを撮影するだけで銘柄情報・ペアリングを瞬時に取得</p>
-      </div>
-      <div class="scan-wrapper reveal">
-        <!-- Upload / Preview -->
-        <div class="scan-upload-area" id="scanUploadArea">
-          <input type="file" accept="image/*" id="scanFileInput" hidden />
-          <div class="scan-placeholder" id="scanPlaceholder">
-            <div class="scan-icon">
-              <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                <rect x="4"  y="4"  width="14" height="6" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
-                <rect x="4"  y="4"  width="6" height="14" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
-                <rect x="46" y="4"  width="14" height="6" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
-                <rect x="54" y="4"  width="6" height="14" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
-                <rect x="4"  y="54" width="14" height="6" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
-                <rect x="4"  y="46" width="6" height="14" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
-                <rect x="46" y="54" width="14" height="6" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
-                <rect x="54" y="46" width="6" height="14" rx="1" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
-                <line x1="32" y1="20" x2="32" y2="44" stroke="#c9a84c" stroke-width="1.5" stroke-dasharray="3,3"/>
-              </svg>
+  addMapMarkers();
+};
+
+const TYPE_COLORS = { brewery:'#e84b4b', shop:'#4b6be8', restaurant:'#4be86a' };
+const TYPE_LABELS = { brewery:'酒蔵', shop:'酒屋', restaurant:'飲食店' };
+
+function addMapMarkers() {
+  mapMarkers.forEach(m => { m.map = null; });
+  mapMarkers = [];
+  if (!googleMap) return;
+
+  const filtered = mapCurrentFilter === 'all'
+    ? mapLocations
+    : mapLocations.filter(l => l.type === mapCurrentFilter);
+
+  filtered.forEach(loc => {
+    if (!loc.lat || !loc.lng) return;
+    const color = TYPE_COLORS[loc.type] || '#888';
+
+    const pin = new google.maps.marker.PinElement({
+      background: color,
+      borderColor: '#ffffff',
+      glyphColor: '#ffffff',
+      scale: 0.85,
+    });
+
+    const marker = new google.maps.marker.AdvancedMarkerElement({
+      position: { lat: loc.lat, lng: loc.lng },
+      map: googleMap,
+      title: loc.name,
+      content: pin.element,
+    });
+
+    const info = new google.maps.InfoWindow({
+      content: `<div style="font-family:'Shippori Mincho','Yu Mincho',serif;padding:4px;min-width:180px">
+        <div style="font-weight:bold;font-size:14px;margin-bottom:4px">${loc.name}</div>
+        <div style="font-size:12px;color:#555">${loc.pref || ''} ・ ${TYPE_LABELS[loc.type]||loc.type}</div>
+        ${loc.sake ? `<div style="font-size:11px;color:#888;margin-top:4px">代表銘柄：${loc.sake}</div>` : ''}
+      </div>`,
+    });
+    marker.addListener('click', () => {
+      mapMarkers.forEach(m => m._info && m._info.close());
+      info.open({ anchor: marker, map: googleMap });
+    });
+    marker._info = info;
+    mapMarkers.push(marker);
+  });
+}
+
+function updateMapMarkers() {
+  if (googleMap) addMapMarkers();
+}
+
+function panToLocation(id) {
+  const loc = mapLocations.find(l => l.id === id);
+  if (!loc || !googleMap) return;
+  googleMap.panTo({ lat: loc.lat, lng: loc.lng });
+  googleMap.setZoom(15);
+}
+
+// ──────────────────────────────────────────────────────
+// LABEL SCAN
+// ──────────────────────────────────────────────────────
+function checkScanApiKey() {
+  document.getElementById('scanNoKey').style.display = ANTHROPIC_API_KEY ? 'none' : 'block';
+}
+
+async function handleFileScan(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  await processScanImage(file);
+}
+
+function openCamera() {
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream => {
+      const wrap = document.getElementById('scanVideoWrap');
+      const video = document.getElementById('scanVideo');
+      video.srcObject = stream;
+      wrap.style.display = 'block';
+    })
+    .catch(() => {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = 'image/*'; input.capture = 'environment';
+      input.onchange = e => processScanImage(e.target.files[0]);
+      input.click();
+    });
+}
+
+function captureFrame() {
+  const video = document.getElementById('scanVideo');
+  const canvas = document.getElementById('scanCanvas');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  canvas.toBlob(blob => {
+    processScanImage(new File([blob], 'capture.jpg', { type:'image/jpeg' }));
+  }, 'image/jpeg', 0.9);
+  video.srcObject?.getTracks().forEach(t => t.stop());
+  document.getElementById('scanVideoWrap').style.display = 'none';
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function processScanImage(file) {
+  hideScanResults();
+  const imgUrl = URL.createObjectURL(file);
+  document.getElementById('scanResultImg').src = imgUrl;
+
+  if (!ANTHROPIC_API_KEY) {
+    document.getElementById('scanNoKey').style.display = 'block';
+    return;
+  }
+
+  document.getElementById('scanLoading').classList.add('active');
+
+  try {
+    const base64 = await fileToBase64(file);
+    const mediaType = file.type || 'image/jpeg';
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [{
+          role: 'user',
+          content: [
+            { type:'image', source:{ type:'base64', media_type: mediaType, data: base64 } },
+            { type:'text', text:'日本酒のラベル画像です。銘柄名と蔵元名を日本語で答えてください。JSON形式のみで回答：{"name":"銘柄名","brewery":"蔵元名"}' }
+          ]
+        }]
+      })
+    });
+
+    if (!resp.ok) throw new Error(`API Error: ${resp.status}`);
+    const result = await resp.json();
+    const text = result.content?.[0]?.text ?? '';
+    const match = text.match(/\{[^}]+\}/);
+    if (!match) throw new Error('Parse error');
+    const parsed = JSON.parse(match[0]);
+    await matchAndShowSake(parsed.name, parsed.brewery, imgUrl);
+
+  } catch (e) {
+    document.getElementById('scanLoading').classList.remove('active');
+    console.error('Scan error:', e);
+    document.getElementById('scanNotFound').classList.add('active');
+  }
+}
+
+async function matchAndShowSake(name, brewery, imgUrl) {
+  let match = sakes.find(s =>
+    s.name.includes(name) || name.includes(s.name) ||
+    (brewery && (s.kura.includes(brewery) || brewery.includes(s.kura)))
+  );
+
+  if (!match && sakes.length) {
+    try {
+      const { data } = await sb.from('sakes').select('*')
+        .or(`name.ilike.%${name}%,brewery.ilike.%${brewery||''}%`)
+        .limit(1);
+      if (data?.[0]) match = dbRowToSake(data[0], sakes.length);
+    } catch (_) {}
+  }
+
+  document.getElementById('scanLoading').classList.remove('active');
+
+  if (!match) {
+    document.getElementById('scanNotFound').classList.add('active');
+    return;
+  }
+
+  document.getElementById('scanSakeName').textContent = match.name;
+  document.getElementById('scanSakeBrewery').textContent = `${match.kura}${match.region?' ｜ '+match.region:''}`;
+  document.getElementById('scanPairingChips').innerHTML =
+    ['旨味','酸味','甘み'].flatMap(k =>
+      (match.taste_profile?.[Object.keys(TASTE_LABEL).find(x=>TASTE_LABEL[x]===k)]||0) >= 3
+        ? [k==='旨味'?'刺身':k==='酸味'?'白身魚':'和菓子'] : []
+    ).concat(['和食全般']).slice(0,4)
+      .map(p => `<span class="scan-pairing-chip">${p}</span>`).join('');
+
+  const detailBtn = document.getElementById('scanDetailBtn');
+  detailBtn.onclick = () => showDetail(match.id);
+
+  const ecLink = document.getElementById('scanEcLink');
+  if (match.ec_url) {
+    ecLink.href = match.ec_url;
+    ecLink.style.display = 'flex';
+  } else {
+    ecLink.style.display = 'none';
+  }
+
+  document.getElementById('scanResultCard').classList.add('active');
+}
+
+function hideScanResults() {
+  document.getElementById('scanResultCard').classList.remove('active');
+  document.getElementById('scanNotFound').classList.remove('active');
+  document.getElementById('scanLoading').classList.remove('active');
+}
+
+// ──────────────────────────────────────────────────────
+// TIMELINE
+// ──────────────────────────────────────────────────────
+let tlLoaded = false;
+let tlMode = 'public';
+let tlPosts = [];
+let tlLocations = [];
+
+async function loadTimeline() {
+  document.getElementById('timelinePosts').innerHTML = '<div class="tl-loading">読み込み中…</div>';
+  try {
+    const { data, error } = await sb.from('timeline_posts')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    tlPosts = data ?? [];
+  } catch (e) {
+    tlPosts = [];
+    document.getElementById('timelinePosts').innerHTML =
+      `<div class="tl-empty" style="color:#c04040">読み込みエラー: ${e.message}<br><small>timeline_posts テーブルを Supabase で作成してください。</small></div>`;
+    return;
+  }
+  renderTimeline();
+}
+
+function setTimelineTab(mode) {
+  tlMode = mode;
+  document.getElementById('tlTabPublic').classList.toggle('active', mode === 'public');
+  document.getElementById('tlTabMine').classList.toggle('active', mode === 'mine');
+  renderTimeline();
+}
+
+const AVATAR_COLORS = ['#8b5c2a','#2a5a2a','#2a2a8a','#8a2a5a','#5a5a2a','#2a5a5a'];
+
+function renderTimeline() {
+  const container = document.getElementById('timelinePosts');
+  const filtered = tlMode === 'mine'
+    ? tlPosts.filter(p => p.user_id === currentUserId)
+    : tlPosts.filter(p => p.is_public || p.user_id === currentUserId);
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="tl-empty">${tlMode==='mine'?'まだ投稿がありません。':'みんなの投稿がありません。'}<br>最初に投稿してみましょう！</div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(p => {
+    const name  = p.user_name || 'ゲスト';
+    const color = AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
+    const char  = name[0];
+    const ts    = formatTime(p.created_at);
+    const isOwn = p.user_id === currentUserId;
+    const loc   = p.location_type === 'home' ? '🏠 自宅'
+                : p.location_name ? `🍴 ${p.location_name}` : '';
+    return `
+      <div class="tl-post">
+        ${p.photo_url ? `<img class="tl-post-img" src="${p.photo_url}" alt="投稿写真">` : ''}
+        <div class="tl-post-body">
+          <div class="tl-post-header">
+            <div class="tl-avatar" style="background:${color}">${char}</div>
+            <div class="tl-post-meta">
+              <div class="tl-post-user">${name}${isOwn?' <span style="font-size:10px;color:#8a7a6a">(自分)</span>':''}</div>
+              <div class="tl-post-time">${ts}</div>
             </div>
-            <p>ラベル画像をここにドロップ</p>
-            <span>または</span>
-            <button class="btn btn-outline" onclick="document.getElementById('scanFileInput').click()">ファイルを選択</button>
+            ${!p.is_public ? '<span class="tl-private-badge">非公開</span>' : ''}
           </div>
-          <div class="scan-preview hidden" id="scanPreview">
-            <img id="scanPreviewImg" alt="スキャン画像" />
-            <div class="scan-overlay"><div class="scan-line"></div></div>
-          </div>
+          ${p.sake_name ? `<div class="tl-sake-tag">🍶 ${p.sake_name}</div>` : ''}
+          ${loc ? `<div class="tl-location-tag">📍 ${loc}</div>` : ''}
+          <div class="tl-comment">${escHtml(p.comment || '')}</div>
         </div>
+      </div>`;
+  }).join('');
+}
 
-        <!-- Right column: steps + result -->
-        <div class="scan-right">
-          <!-- Step progress (hidden until scan starts) -->
-          <div class="scan-steps hidden" id="scanSteps"></div>
+function formatTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = (now - d) / 1000;
+  if (diff < 60)   return 'たった今';
+  if (diff < 3600) return `${Math.floor(diff/60)}分前`;
+  if (diff < 86400)return `${Math.floor(diff/3600)}時間前`;
+  return `${d.getMonth()+1}月${d.getDate()}日`;
+}
 
-          <!-- Result -->
-          <div class="scan-result hidden" id="scanResult">
-            <div class="scan-result-header">
-              <div class="scan-result-badge">AI認識完了</div>
-              <h3 id="scanResultName"></h3>
-              <p id="scanResultBrewery"></p>
-            </div>
-            <div class="scan-result-details" id="scanResultDetails"></div>
-            <a href="#" class="btn btn-primary" id="scanBuyBtn" target="_blank" rel="noopener">購入ページへ</a>
-          </div>
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-          <!-- Idle state placeholder -->
-          <div class="scan-idle" id="scanIdle">
-            <div class="scan-idle-icon">🔍</div>
-            <p>左の画像エリアにラベルをアップロードすると、<br>AIが銘柄・ペアリング・購入先を自動で表示します。</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+// POST FORM
+let postPhotoFile = null;
 
-  <!-- ═══════════════════════════ SUBSCRIPTION ═══════════════════════════ -->
-  <section class="section" id="subscription">
-    <div class="container">
-      <div class="section-header reveal">
-        <p class="section-eyebrow">SUBSCRIPTION</p>
-        <h2 class="section-title">サブスク頒布会</h2>
-        <p class="section-desc">毎月、厳選された日本酒があなたの元に届く特別なプラン</p>
-      </div>
+function openPostForm() {
+  loadTimelineLocations();
+  document.getElementById('postModal').classList.add('active');
+}
 
-      <!-- Plans -->
-      <div class="subscription-grid">
-        <div class="sub-card reveal" data-delay="0">
-          <div class="sub-badge">スタンダード</div>
-          <div class="sub-price"><span class="sub-yen">¥</span>3,980<span class="sub-period">/月</span></div>
-          <ul class="sub-features">
-            <li>毎月2本の厳選銘柄</li>
-            <li>テイスティングカード付き</li>
-            <li>ペアリングレシピ</li>
-            <li>蔵元情報カード</li>
-          </ul>
-          <button class="btn btn-outline sub-btn">申し込む</button>
-        </div>
-        <div class="sub-card sub-card-featured reveal" data-delay="150">
-          <div class="sub-badge-featured">人気No.1</div>
-          <div class="sub-badge">プレミアム</div>
-          <div class="sub-price"><span class="sub-yen">¥</span>7,480<span class="sub-period">/月</span></div>
-          <ul class="sub-features">
-            <li>毎月4本の厳選銘柄</li>
-            <li>大吟醸クラス必ず1本</li>
-            <li>テイスティングカード付き</li>
-            <li>ペアリングレシピ</li>
-            <li>蔵元直筆メッセージ</li>
-            <li>限定セール先行アクセス</li>
-          </ul>
-          <button class="btn btn-primary sub-btn">申し込む</button>
-        </div>
-        <div class="sub-card reveal" data-delay="300">
-          <div class="sub-badge">コレクター</div>
-          <div class="sub-price"><span class="sub-yen">¥</span>14,800<span class="sub-period">/月</span></div>
-          <ul class="sub-features">
-            <li>毎月6本の最高級銘柄</li>
-            <li>入手困難銘柄を優先的に</li>
-            <li>専任ソムリエのコメント</li>
-            <li>限定陶器盃プレゼント</li>
-            <li>蔵元訪問ツアー割引</li>
-            <li>VIP会員優待</li>
-          </ul>
-          <button class="btn btn-outline sub-btn">申し込む</button>
-        </div>
-      </div>
+function closePostForm() {
+  document.getElementById('postModal').classList.remove('active');
+  postPhotoFile = null;
+  document.getElementById('postPhotoPreview').src = '';
+  document.getElementById('postPhotoPreview').style.display = 'none';
+  document.getElementById('postPhotoPlaceholder').style.display = 'block';
+  document.getElementById('postComment').value = '';
+  document.getElementById('postSakeSelect').value = '';
+  document.getElementById('postIsPublic').checked = true;
+  updatePublicLabel();
+}
 
-      <!-- Testimonials -->
-      <div class="sub-section-title reveal" style="margin-top:4rem">
-        <p class="section-eyebrow">REVIEWS</p>
-        <h3 class="section-title" style="font-size:1.6rem">会員の声</h3>
-      </div>
-      <div class="testimonial-grid" id="testimonialGrid"></div>
+async function loadTimelineLocations() {
+  if (tlLocations.length) return;
+  try {
+    const { data } = await sb.from('locations')
+      .select('id,name,pref,type')
+      .in('type', ['shop', 'restaurant'])
+      .order('pref')
+      .limit(200);
+    tlLocations = data ?? [];
+  } catch (_) { tlLocations = []; }
+  const sel = document.getElementById('postLocationSelect');
+  sel.innerHTML = '<option value="">店舗を選択…</option>';
+  tlLocations.forEach(l => {
+    const opt = document.createElement('option');
+    opt.value = l.name;
+    opt.textContent = `${l.name}（${l.pref||''}）`;
+    sel.appendChild(opt);
+  });
+}
 
-      <!-- FAQ -->
-      <div class="sub-section-title reveal" style="margin-top:4rem">
-        <p class="section-eyebrow">FAQ</p>
-        <h3 class="section-title" style="font-size:1.6rem">よくある質問</h3>
-      </div>
-      <div class="faq-container reveal" id="faqContainer"></div>
-    </div>
-  </section>
+function populatePostSakeSelect() {
+  const sel = document.getElementById('postSakeSelect');
+  sel.innerHTML = '<option value="">銘柄を選択…</option>';
+  sakes.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = `${s.name}（${s.kura}）`;
+    opt.dataset.name = s.name;
+    sel.appendChild(opt);
+  });
+}
 
-  <!-- ═══════════════════════════ BREWERY ═══════════════════════════ -->
-  <section class="section section-dark" id="brewery">
-    <div class="container">
-      <div class="section-header reveal">
-        <p class="section-eyebrow">BREWERY</p>
-        <h2 class="section-title">蔵元紹介</h2>
-        <p class="section-desc">日本各地の個性豊かな蔵元たちをご紹介します</p>
-      </div>
-      <div class="brewery-grid" id="breweryGrid"></div>
-    </div>
-  </section>
+function previewPostPhoto(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  postPhotoFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('postPhotoPreview');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    document.getElementById('postPhotoPlaceholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
 
-  <!-- ═══════════════════════════ FOOTER ═══════════════════════════ -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-top">
-        <div class="footer-brand">
-          <a href="#hero" class="nav-logo">
-            <span class="logo-kanji">酒</span>
-            <span class="logo-text">SakeFind</span>
-          </a>
-          <p>AIが繋ぐ、あなたと日本酒の物語。<br>全国の蔵元と酒ファンをひとつに。</p>
-        </div>
-        <div class="footer-links">
-          <div class="footer-col">
-            <h4>サービス</h4>
-            <ul>
-              <li><a href="#ai-diagnosis">AI味覚診断</a></li>
-              <li><a href="#catalog">日本酒カタログ</a></li>
-              <li><a href="#map">店舗マップ</a></li>
-              <li><a href="#label-scan">ラベルスキャン</a></li>
-            </ul>
-          </div>
-          <div class="footer-col">
-            <h4>コミュニティ</h4>
-            <ul>
-              <li><a href="#timeline">タイムライン</a></li>
-              <li><a href="#subscription">頒布会</a></li>
-              <li><a href="#brewery">蔵元紹介</a></li>
-            </ul>
-          </div>
-          <div class="footer-col">
-            <h4>SakeFind</h4>
-            <ul>
-              <li><a href="#">運営会社</a></li>
-              <li><a href="#">利用規約</a></li>
-              <li><a href="#">プライバシーポリシー</a></li>
-              <li><a href="#">お問い合わせ</a></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <p>&copy; 2026 SakeFind. All rights reserved.</p>
-        <p class="footer-tagline">日本酒文化を、世界へ。</p>
-      </div>
-    </div>
-  </footer>
+function toggleLocationSelect() {
+  const type = document.querySelector('input[name="locationType"]:checked')?.value;
+  document.getElementById('restaurantSelectGroup').style.display = type === 'restaurant' ? 'block' : 'none';
+}
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="js/main.js"></script>
+function updatePublicLabel() {
+  const pub = document.getElementById('postIsPublic').checked;
+  document.getElementById('publicToggleLabel').textContent = pub ? '公開' : '自分のみ';
+}
+
+async function submitPost() {
+  const comment = document.getElementById('postComment').value.trim();
+  if (!postPhotoFile) { alert('写真を選択してください'); return; }
+  if (!comment)       { alert('コメントを入力してください'); return; }
+
+  const btn = document.getElementById('postSubmitBtn');
+  btn.disabled = true; btn.textContent = '投稿中…';
+
+  try {
+    let photoUrl = '';
+    const fileName = `${currentUserId}_${Date.now()}_${postPhotoFile.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+    const { data: uploadData, error: uploadErr } = await sb.storage
+      .from('timeline')
+      .upload(fileName, postPhotoFile, { cacheControl:'3600', upsert:false });
+    if (uploadErr) throw uploadErr;
+    photoUrl = sb.storage.from('timeline').getPublicUrl(fileName).data.publicUrl;
+
+    const sakeOpt = document.getElementById('postSakeSelect');
+    const sakeName = sakeOpt.selectedOptions[0]?.dataset.name || '';
+    const sakeId   = sakeOpt.value ? parseInt(sakeOpt.value) : null;
+    const locType  = document.querySelector('input[name="locationType"]:checked')?.value || 'home';
+    const locName  = locType === 'restaurant' ? (document.getElementById('postLocationSelect').value || '') : '';
+    const isPublic = document.getElementById('postIsPublic').checked;
+
+    const { error: insertErr } = await sb.from('timeline_posts').insert({
+      user_id:       currentUserId,
+      user_name:     currentUserName,
+      sake_id:       sakeId,
+      sake_name:     sakeName,
+      photo_url:     photoUrl,
+      comment:       comment,
+      location_type: locType,
+      location_name: locName,
+      is_public:     isPublic,
+    });
+    if (insertErr) throw insertErr;
+
+    closePostForm();
+    tlLoaded = false;
+    await loadTimeline();
+    alert('投稿しました！');
+  } catch (e) {
+    alert('投稿エラー: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '投稿する';
+  }
+}
+
+// ──────────────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────────────
+initSakes();
+checkScanApiKey();
+</script>
 </body>
 </html>
