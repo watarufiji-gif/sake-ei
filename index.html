@@ -6,82 +6,136 @@
 <title>SakeFind - 日本酒発見アプリ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600;700&family=Shippori+Mincho:wght@400;600;700;800&family=Shippori+Mincho+B1:wght@400;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script>
   const _cfg = window.SAKEFIND_CONFIG || {};
-  const SUPABASE_URL        = _cfg.SUPABASE_URL        || '';
+  const SUPABASE_URL        = _cfg.SUPABASE_URL        || 'https://vgoblfarmrljkujqyogd.supabase.co';
   const SUPABASE_KEY        = _cfg.SUPABASE_KEY        || '';
-  const GOOGLE_MAPS_API_KEY = _cfg.GOOGLE_MAPS_API_KEY || '';
-  const ANTHROPIC_API_KEY   = _cfg.ANTHROPIC_API_KEY   || '';
+  const GOOGLE_MAPS_API_KEY  = _cfg.GOOGLE_MAPS_API_KEY  || '';
+  const ANTHROPIC_API_KEY    = _cfg.ANTHROPIC_API_KEY    || '';
+  const OPENAI_API_KEY       = _cfg.OPENAI_API_KEY       || '';
+  const PERPLEXITY_API_KEY   = _cfg.PERPLEXITY_API_KEY   || '';
   if (!SUPABASE_URL) console.warn('[SakeFind] config.js が読み込まれていません。config.example.js をコピーして設定してください。');
   const sb = window.supabase.createClient(SUPABASE_URL || 'https://placeholder.supabase.co', SUPABASE_KEY || 'placeholder');
 </script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
-  --bg: #1a0a00;
-  --accent: #c8a96e;
+  --accent: #1D9E75;
+  --accent-light: #e6f7f1;
+  --accent-mid: #0F6E56;
+  --cta: #D85A30;
+  --cta-hover: #B84820;
+  --text: #1a1a1a;
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
+  --cream: #fafaf8;
+  --bg: #ffffff;
   --card-bg: #ffffff;
-  --text-light: #f5e6d0;
-  --text-muted: #8a7a6a;
-  --border: #3d2010;
-  --hover: #2d1505;
 }
-body { font-family: 'Shippori Mincho', 'Yu Mincho', '游明朝', 'Hiragino Mincho ProN', serif; background: #f0e8dc; color: #2a1505; min-height: 100vh; }
+body { font-family: 'Noto Serif JP', 'Yu Mincho', '游明朝', serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+
+/* ===== LOADING ===== */
+.loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+.skeleton { background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size: 200% 100%; animation: skeleton-shine 1.4s ease infinite; border-radius: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes skeleton-shine { from{background-position:200% center} to{background-position:-200% center} }
 
 /* ===== HEADER ===== */
 header {
-  background: var(--bg);
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 56px;
-  position: sticky;
-  top: 0;
-  z-index: 200;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  background: white;
+  padding: 0 24px;
+  display: flex; align-items: center; gap: 12px;
+  height: 60px; position: sticky; top: 0; z-index: 200;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.35s, border-color 0.35s;
 }
+header.header-scrolled {
+  background: #D85A30;
+  border-bottom-color: #B84820;
+}
+header.header-scrolled .logo { color: white; }
+header.header-scrolled .tab-btn { color: rgba(255,255,255,0.78); }
+header.header-scrolled .tab-btn:hover { color: white; }
+header.header-scrolled .tab-btn.active { color: white; }
+header.header-scrolled .tab-btn.active::after { background: white; }
+header.header-scrolled .search-bar { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); color: white; }
+header.header-scrolled .search-bar::placeholder { color: rgba(255,255,255,0.6); }
+header.header-scrolled .btn-login { border-color: white; color: white; }
+header.header-scrolled .btn-register { background: white; color: #D85A30; border: 1px solid white; }
 .logo {
-  font-size: 20px; font-weight: 900; color: var(--accent);
-  white-space: nowrap; letter-spacing: 1px; cursor: pointer; user-select: none; flex-shrink: 0;
+  font-size: 17px; font-weight: 700; color: #D85A30;
+  white-space: nowrap; cursor: pointer; user-select: none; flex-shrink: 0;
+  display: flex; align-items: center; gap: 6px; letter-spacing: 0.3px;
 }
-.logo span { font-size: 24px; margin-right: 3px; }
+.logo-icon { font-size: 20px; }
 nav { display: flex; align-items: center; gap: 0; flex: 1; justify-content: center; }
 .tab-btn {
-  background: none; border: none; color: #b09070;
-  font-size: 13px; padding: 18px 12px; cursor: pointer;
+  background: none; border: none; color: var(--text-muted);
+  font-size: 13px; padding: 20px 13px; cursor: pointer;
   white-space: nowrap; position: relative; transition: color 0.2s; font-family: inherit;
 }
-.tab-btn:hover { color: var(--accent); }
-.tab-btn.active { color: var(--accent); }
+.tab-btn:hover { color: #D85A30; }
+.tab-btn.active { color: #D85A30; font-weight: 600; }
 .tab-btn.active::after {
-  content: ''; position: absolute; bottom: 0; left: 12px; right: 12px;
-  height: 2px; background: var(--accent); border-radius: 2px 2px 0 0;
+  content: ''; position: absolute; bottom: 0; left: 13px; right: 13px;
+  height: 2px; background: #D85A30; border-radius: 2px 2px 0 0;
 }
-.header-search-wrap { flex: 1; max-width: 240px; }
+.header-search-wrap { flex: 1; max-width: 280px; }
 .search-bar {
-  width: 100%; background: #2d1505; border: 1px solid var(--border);
-  border-radius: 20px; padding: 7px 14px; color: var(--text-light);
+  width: 100%; background: var(--cream); border: 1px solid var(--border);
+  border-radius: 20px; padding: 7px 16px; color: var(--text);
   font-size: 13px; outline: none; font-family: inherit;
 }
-.search-bar::placeholder { color: #6a5040; }
-.search-bar:focus { border-color: var(--accent); }
-.header-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.search-bar::placeholder { color: #9ca3af; }
+.search-bar:focus { border-color: var(--accent); background: white; box-shadow: 0 0 0 3px rgba(29,158,117,0.08); }
+.header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .btn-login {
-  background: none; border: 1px solid var(--accent); color: var(--accent);
-  padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;
-  font-family: inherit; transition: background 0.2s;
+  background: none; border: 1px solid var(--border); color: var(--text-muted);
+  padding: 5px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;
+  font-family: inherit; transition: all 0.2s;
 }
-.btn-login:hover { background: rgba(200,169,110,0.1); }
+.btn-login:hover { border-color: var(--accent); color: var(--accent); }
 .btn-register {
-  background: var(--accent); border: none; color: var(--bg);
-  padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;
-  font-weight: bold; font-family: inherit; transition: opacity 0.2s;
+  background: #D85A30; border: none; color: white;
+  padding: 5px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;
+  font-weight: 600; font-family: inherit; transition: all 0.2s;
 }
-.btn-register:hover { opacity: 0.85; }
+.btn-register:hover { background: #B84820; opacity: 1; }
+.user-avatar-btn {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--border); background: white; color: var(--accent);
+  display: none; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 14px; font-weight: 700; font-family: inherit;
+}
+.user-avatar-btn.visible { display: inline-flex; }
+.user-menu {
+  position: relative;
+}
+.user-menu-trigger {
+  display: none; align-items: center; gap: 8px;
+  background: white; border: 1px solid var(--border); border-radius: 20px;
+  padding: 4px 10px 4px 4px; cursor: pointer; font-family: inherit;
+}
+.user-menu-trigger.visible { display: inline-flex; }
+.user-menu-avatar {
+  width: 28px; height: 28px; border-radius: 50%; background: #f3f8f2;
+  display: inline-flex; align-items: center; justify-content: center; color: var(--accent); font-size: 14px;
+}
+.user-menu-name { font-size: 12px; color: var(--text); max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-dropdown {
+  position: absolute; top: calc(100% + 6px); right: 0; min-width: 160px;
+  background: white; border: 1px solid var(--border); border-radius: 10px; padding: 6px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08); display: none; z-index: 260;
+}
+.user-dropdown.open { display: block; }
+.user-dd-btn {
+  width: 100%; text-align: left; background: none; border: none; border-radius: 8px;
+  padding: 8px 10px; font-size: 13px; cursor: pointer; font-family: inherit; color: var(--text);
+}
+.user-dd-btn:hover { background: #f6faf5; color: var(--accent); }
 
 /* ===== PAGE ===== */
 .page { display: none; }
@@ -90,252 +144,560 @@ nav { display: flex; align-items: center; gap: 0; flex: 1; justify-content: cent
 /* ===== BOTTOM NAV ===== */
 .bottom-nav {
   display: none; position: fixed; bottom: 0; left: 0; right: 0;
-  background: var(--bg); border-top: 1px solid var(--border);
+  background: white; border-top: 1px solid var(--border);
   z-index: 200; justify-content: space-around; padding: 6px 0 max(6px, env(safe-area-inset-bottom));
 }
 .bnav-btn {
-  background: none; border: none; color: #b09070;
+  background: none; border: none; color: var(--text-muted);
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  cursor: pointer; font-family: inherit; padding: 4px 8px; min-width: 56px;
+  cursor: pointer; font-family: inherit; padding: 4px 6px; min-width: 48px;
   transition: color 0.2s;
 }
+.bnav-btn.active { color: var(--accent); }
 .bnav-btn.active { color: var(--accent); }
 .bnav-btn span:first-child { font-size: 20px; line-height: 1; }
 .bnav-btn span:last-child { font-size: 10px; }
 
-/* ===== CATALOG ===== */
-.catalog-layout { display: flex; min-height: calc(100vh - 56px); }
+/* ===== TOP PAGE ===== */
+#page-top { background: white; }
+.hero-section {
+  background: linear-gradient(160deg,#edfaf4 0%,#e0f4ec 50%,#fafaf8 100%);
+  padding: 72px 24px 60px; text-align: center; position: relative; overflow: hidden;
+  border-bottom: 1px solid var(--border);
+}
+.hero-section::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(29,158,117,0.05) 1px, transparent 1px);
+  background-size: 32px 32px; pointer-events: none;
+}
+.hero-eyebrow { font-size: 11px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; margin-bottom: 18px; font-weight: 600; }
+.hero-title { font-size: 34px; font-weight: 700; color: var(--text); line-height: 1.5; margin-bottom: 16px; max-width: 600px; margin-left: auto; margin-right: auto; }
+.hero-sub { font-size: 15px; color: var(--text-muted); margin-bottom: 36px; line-height: 1.8; max-width: 480px; margin-left: auto; margin-right: auto; }
+.hero-cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.hero-cta-btn {
+  background: var(--cta); color: white; border: none;
+  padding: 14px 36px; border-radius: 50px; font-size: 15px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: all 0.22s;
+  box-shadow: 0 4px 16px rgba(216,90,48,0.28);
+}
+.hero-cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(216,90,48,0.35); background: var(--cta-hover); }
+.hero-cta-outline {
+  background: none; border: 2px solid var(--accent); color: var(--accent);
+  padding: 12px 30px; border-radius: 50px; font-size: 15px; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: all 0.22s;
+}
+.hero-cta-outline:hover { background: var(--accent-light); transform: translateY(-2px); }
+
+.top-section { max-width: 1100px; margin: 0 auto; padding: 52px 24px; }
+.section-heading {
+  font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px;
+  display: flex; align-items: center; gap: 14px;
+}
+.section-heading::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.section-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+
+.featured-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-bottom: 52px; }
+.featured-card {
+  background: white; border-radius: 14px; overflow: hidden;
+  border: 1px solid var(--border); cursor: pointer;
+  transition: transform 0.24s, box-shadow 0.24s;
+}
+.featured-card:hover { transform: translateY(-6px); box-shadow: 0 14px 36px rgba(0,0,0,0.10); }
+.featured-img {
+  width: 100%; aspect-ratio: 3/4;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--cream); position: relative; overflow: hidden;
+}
+.featured-img img { width: 100%; height: 100%; object-fit: cover; }
+.bottle-placeholder {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  color: #d1d5db;
+}
+.bottle-placeholder svg { width: 52px; opacity: 0.5; }
+.bottle-placeholder-text { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
+.featured-badge {
+  position: absolute; top: 10px; left: 10px;
+  background: var(--accent); color: white;
+  font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 4px; letter-spacing: 1px;
+}
+.featured-body { padding: 18px; }
+.featured-kura { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.featured-name { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; line-height: 1.35; }
+.featured-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.featured-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--accent-light); color: var(--accent); font-weight: 600; }
+.featured-desc { font-size: 12px; color: var(--text-muted); line-height: 1.7; margin-bottom: 16px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-clamp: 3; }
+.featured-actions { display: flex; gap: 8px; }
+.btn-featured-detail {
+  flex: 1; background: white; color: var(--accent); border: 1.5px solid var(--accent);
+  padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: all 0.2s; text-align: center;
+}
+.btn-featured-detail:hover { background: var(--accent-light); }
+.btn-amazon {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--cta); color: white; border: none;
+  padding: 10px 12px; border-radius: 8px; font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: inherit; text-decoration: none; transition: opacity 0.2s; white-space: nowrap;
+}
+.btn-amazon:hover { background: var(--cta-hover); opacity: 1; }
+
+.banner-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.promo-banner {
+  border-radius: 16px; padding: 32px 28px; cursor: pointer;
+  transition: transform 0.22s, box-shadow 0.22s; position: relative; overflow: hidden;
+}
+.promo-banner:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.14); }
+.promo-banner-ai { background: linear-gradient(135deg,#0a4a36 0%,#0F6E56 55%,#1D9E75 100%); }
+.promo-banner-map { background: linear-gradient(135deg,#1a3050 0%,#2a5080 55%,#3a70a0 100%); }
+.promo-banner-deco { position: absolute; right: -12px; bottom: -22px; font-size: 96px; opacity: 0.10; line-height: 1; pointer-events: none; user-select: none; }
+.promo-banner-eyebrow { font-size: 10px; letter-spacing: 2px; color: rgba(255,255,255,0.65); text-transform: uppercase; margin-bottom: 8px; font-weight: 600; }
+.promo-banner-title { font-size: 21px; font-weight: 700; color: white; margin-bottom: 8px; line-height: 1.3; }
+.promo-banner-sub { font-size: 13px; color: rgba(255,255,255,0.72); line-height: 1.65; margin-bottom: 18px; }
+.promo-banner-btn {
+  display: inline-block; background: white; padding: 8px 20px; border-radius: 20px;
+  font-size: 12px; font-weight: 700; font-family: inherit; border: none; cursor: pointer; transition: opacity 0.2s;
+  color: var(--accent);
+}
+.promo-banner-map .promo-banner-btn { color: #2a5080; }
+.promo-banner-btn:hover { opacity: 0.9; }
+
+/* ===== CATALOG LAYOUT ===== */
+.catalog-layout { display: flex; min-height: calc(100vh - 60px); }
+
+/* SIDEBAR */
 .sidebar {
-  width: 190px; min-width: 190px; background: #f8f0e4;
-  border-right: 1px solid #d4c4a8; padding: 16px 0;
+  width: 172px; min-width: 172px; background: white;
+  border-right: 1px solid var(--border); padding: 20px 0; overflow-y: auto;
 }
-.filter-title {
-  font-size: 11px; font-weight: bold; color: #8a7a6a;
-  letter-spacing: 1px; padding: 10px 14px 6px; text-transform: uppercase;
-}
+.filter-section { margin-bottom: 4px; }
+.filter-title { font-size: 9px; font-weight: 700; color: #9ca3af; letter-spacing: 2px; padding: 10px 16px 5px; text-transform: uppercase; }
 .filter-item {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 7px 14px; cursor: pointer; font-size: 13px; color: #3a2510;
-  transition: background 0.15s; user-select: none;
+  padding: 8px 16px 8px 22px; cursor: pointer; font-size: 13px; color: var(--text-muted);
+  transition: all 0.15s; user-select: none; position: relative; line-height: 1.4;
 }
-.filter-item:hover { background: #e8d8c0; }
-.filter-item.active { background: var(--bg); color: var(--accent); }
-.filter-count {
-  font-size: 10px; background: #ddd; color: #666; border-radius: 10px; padding: 1px 6px;
+.filter-item:hover { color: var(--accent); background: var(--accent-light); }
+.filter-item.active { color: var(--accent); font-weight: 600; }
+.filter-item.active::before {
+  content: ''; position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 13px; background: var(--accent); border-radius: 2px;
 }
-.filter-item.active .filter-count { background: #3d2010; color: var(--accent); }
-.filter-divider { height: 1px; background: #d4c4a8; margin: 6px 14px; }
-.main-content { flex: 1; padding: 20px; }
-.main-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.result-count { font-size: 14px; color: #6a5040; }
-.result-count strong { color: #2a1505; }
-.sort-select {
-  border: 1px solid #c4b49a; background: white; padding: 5px 10px;
-  border-radius: 4px; font-size: 13px; font-family: inherit; color: #2a1505; cursor: pointer; outline: none;
-}
-.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+.filter-divider { height: 1px; background: var(--border); margin: 10px 14px; }
+
+/* MAIN */
+.main-content { flex: 1; padding: 28px; background: var(--cream); }
+.main-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.result-count { font-size: 12px; color: var(--text-muted); }
+.result-count strong { color: var(--text); font-size: 20px; margin-right: 2px; font-weight: 700; }
+.sort-select { border: 1px solid var(--border); background: white; padding: 6px 10px; border-radius: 6px; font-size: 13px; font-family: inherit; color: var(--text); cursor: pointer; outline: none; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 20px; }
+
+/* SAKE CARD */
 .sake-card {
-  background: white; border-radius: 10px; overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  background: white; border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--border); cursor: pointer;
+  transition: transform 0.24s, box-shadow 0.24s;
 }
-.sake-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.13); }
-.card-image { width: 100%; aspect-ratio: 3/4; position: relative; overflow: hidden; }
-.card-label {
-  width: 100%; height: 100%; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; padding: 12px; position: relative;
+.sake-card:hover { transform: translateY(-5px); box-shadow: 0 12px 28px rgba(0,0,0,0.10); }
+.card-img-wrap {
+  width: 100%; aspect-ratio: 3/4; position: relative;
+  background: var(--cream); overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
 }
-.label-content { position: relative; z-index: 1; text-align: center; width: 100%; }
+.card-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.card-bottle-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #d1d5db; }
+.card-bottle-placeholder svg { width: 40px; }
+.card-type-badge {
+  position: absolute; top: 10px; left: 10px;
+  font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px;
+  background: var(--accent-light); color: var(--accent);
+}
 .heart-btn {
-  position: absolute; top: 6px; right: 6px;
-  background: rgba(255,255,255,0.85); border: none; border-radius: 50%;
-  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 14px; z-index: 2; transition: background 0.2s; color: #ccc;
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.9); border: none; border-radius: 50%;
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 15px; z-index: 3; transition: background 0.2s; color: #d1d5db;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
 }
 .heart-btn.liked { color: #e84b4b; }
-.card-body { padding: 10px; }
-.card-kura { font-size: 11px; color: #8a7a6a; margin-bottom: 2px; }
-.card-name { font-size: 14px; font-weight: bold; color: #1a0a00; margin-bottom: 6px; line-height: 1.3; }
-.card-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 8px; }
-.tag { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: #f0e8dc; color: #5a3a20; border: 1px solid #d4c4a8; }
-.card-footer { display: flex; align-items: center; justify-content: space-between; }
-.btn-buy {
-  background: var(--bg); color: var(--accent); border: none;
-  padding: 5px 10px; border-radius: 4px; font-size: 11px;
-  cursor: pointer; font-family: inherit; font-weight: bold; transition: background 0.2s;
+.card-body { padding: 14px; }
+.card-kura { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.card-name { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; line-height: 1.35; }
+.card-region-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.card-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--accent-light); color: var(--accent); font-weight: 600; }
+.card-tag-muted { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #f3f4f6; color: var(--text-muted); }
+.card-actions { display: flex; gap: 6px; }
+.btn-card-detail {
+  flex: 1; background: white; color: var(--accent); border: 1.5px solid var(--accent);
+  padding: 9px; border-radius: 8px; font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: all 0.2s; text-align: center;
 }
-.btn-buy:hover { background: #2d1505; }
+.btn-card-detail:hover { background: var(--accent-light); }
+.btn-amazon-card {
+  display: flex; align-items: center; gap: 3px;
+  background: var(--cta); color: white; border: none;
+  padding: 9px 10px; border-radius: 8px; font-size: 11px; font-weight: 700;
+  cursor: pointer; font-family: inherit; text-decoration: none; transition: opacity 0.2s; white-space: nowrap;
+}
+.btn-amazon-card:hover { background: var(--cta-hover); opacity: 1; }
+.card-skeleton { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+.card-skeleton-img { width: 100%; aspect-ratio: 3/4; }
+.card-skeleton-body { padding: 14px; }
+.card-skeleton-line { height: 12px; margin-bottom: 8px; }
+.card-skeleton-line.wide { width: 75%; }
+.card-skeleton-line.narrow { width: 45%; }
+.tag { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: #f3f4f6; color: var(--text-muted); border: 1px solid var(--border); }
+.btn-buy { background: var(--cta); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-family: inherit; font-weight: 700; transition: background 0.2s; }
+.btn-buy:hover { background: var(--cta-hover); }
 
 /* ===== DETAIL ===== */
-#page-detail { padding: 0; min-height: calc(100vh - 56px); background: #f0e8dc; }
-.detail-layout { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 56px); }
+#page-detail { padding: 0; min-height: calc(100vh - 60px); background: var(--cream); }
+.detail-layout { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 60px); }
 .detail-image-col {
-  background: var(--bg); display: flex; align-items: center; justify-content: center;
+  background: #f3f4f6; display: flex; align-items: center; justify-content: center;
   padding: 40px; min-height: 500px;
 }
 .detail-label {
-  width: 260px; max-width: 100%; aspect-ratio: 3/4; border-radius: 8px;
+  width: 260px; max-width: 100%; aspect-ratio: 3/4; border-radius: 12px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 28px 20px; box-shadow: 0 16px 48px rgba(0,0,0,0.5); position: relative; overflow: hidden;
+  padding: 28px 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); position: relative; overflow: hidden;
+  background: white; border: 1px solid var(--border);
 }
-.detail-info-col { padding: 36px 40px; overflow-y: auto; }
+.detail-info-col { padding: 36px 40px; overflow-y: auto; background: white; }
 .back-btn {
-  display: inline-flex; align-items: center; gap: 5px; color: var(--accent);
+  display: inline-flex; align-items: center; gap: 5px; color: var(--text-muted);
   background: none; border: none; cursor: pointer; font-size: 13px;
-  font-family: inherit; margin-bottom: 20px; padding: 0; transition: opacity 0.2s;
+  font-family: inherit; margin-bottom: 20px; padding: 0; transition: color 0.2s;
 }
-.back-btn:hover { opacity: 0.7; }
-.detail-kura { font-size: 13px; color: #8a7a6a; margin-bottom: 4px; }
-.detail-name { font-size: 28px; font-weight: 900; color: #1a0a00; margin-bottom: 10px; line-height: 1.2; }
+.back-btn:hover { color: var(--accent); }
+.detail-kura { font-size: 13px; color: var(--text-muted); margin-bottom: 4px; }
+.detail-name { font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 10px; line-height: 1.2; }
 .detail-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 24px; }
 .detail-tags .tag { font-size: 12px; padding: 3px 9px; }
 .spec-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
-.spec-table tr { border-bottom: 1px solid #d4c4a8; }
+.spec-table tr { border-bottom: 1px solid var(--border); }
 .spec-table td { padding: 9px 0; font-size: 13px; }
-.spec-table td:first-child { color: #8a7a6a; width: 110px; }
-.spec-table td:last-child { font-weight: 600; color: #1a0a00; }
+.spec-table td:first-child { color: var(--text-muted); width: 110px; }
+.spec-table td:last-child { font-weight: 600; color: var(--text); }
 .pairing-section { margin-bottom: 24px; }
-.section-label { font-size: 11px; font-weight: bold; color: #8a7a6a; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+.section-label { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
 .pairing-items { display: flex; gap: 6px; flex-wrap: wrap; }
-.pairing-item { background: white; border: 1px solid #d4c4a8; border-radius: 20px; padding: 3px 10px; font-size: 12px; color: #3a2510; }
-.detail-price { font-size: 16px; color: #1a0a00; margin-bottom: 18px; }
+.pairing-item { background: var(--cream); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 12px; color: var(--text); }
+.detail-price { font-size: 16px; color: var(--text); margin-bottom: 18px; }
 .detail-actions { display: flex; gap: 10px; }
 .btn-ec {
-  flex: 1; background: var(--accent); color: var(--bg); border: none;
-  padding: 13px 20px; border-radius: 6px; font-size: 14px; font-weight: bold;
-  cursor: pointer; font-family: inherit; transition: opacity 0.2s;
+  flex: 1; background: var(--cta); color: white; border: none;
+  padding: 13px 20px; border-radius: 8px; font-size: 14px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: background 0.2s;
 }
-.btn-ec:hover { opacity: 0.85; }
+.btn-ec:hover { background: var(--cta-hover); }
 .btn-fav {
-  background: white; border: 1px solid #d4c4a8; color: #e84b4b;
-  padding: 13px 16px; border-radius: 6px; font-size: 17px; cursor: pointer; transition: background 0.2s;
+  background: white; border: 1px solid var(--border); color: #e84b4b;
+  padding: 13px 16px; border-radius: 8px; font-size: 17px; cursor: pointer; transition: all 0.2s;
 }
-.btn-fav:hover { background: #fff0f0; }
-.btn-fav.liked { background: #fff0f0; }
+.btn-fav:hover { background: #fff0f0; border-color: #e84b4b; }
+.btn-fav.liked { background: #fff0f0; border-color: #e84b4b; }
 
 /* ===== TAB CONTENT ===== */
 .tab-content { max-width: 900px; margin: 40px auto; padding: 0 20px; }
-.tab-title { font-size: 26px; font-weight: 900; color: #1a0a00; margin-bottom: 6px; }
-.tab-subtitle { font-size: 14px; color: #6a5040; margin-bottom: 28px; }
+.tab-title { font-size: 26px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.tab-subtitle { font-size: 14px; color: var(--text-muted); margin-bottom: 28px; }
 
-/* ===== AI QUIZ ===== */
-.ai-start-btn {
-  background: var(--bg); color: var(--accent); border: none;
-  padding: 15px 36px; border-radius: 8px; font-size: 16px; font-weight: bold;
-  cursor: pointer; font-family: inherit; transition: background 0.2s; display: block; margin-bottom: 28px;
+/* ===== AI DIAGNOSIS ===== */
+#page-ai {
+  min-height: calc(100vh - 60px);
+  background-color: #fafaf8;
+  background-image:
+    radial-gradient(ellipse at 15% 60%, rgba(29,158,117,0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 15%, rgba(29,158,117,0.04) 0%, transparent 45%);
 }
-.ai-start-btn:hover { background: #2d1505; }
+.ai-page-wrap { max-width: 680px; margin: 0 auto; padding: 0 20px 80px; }
+
+/* HERO */
+.ai-hero { text-align: center; padding: 56px 16px 44px; position: relative; overflow: hidden; }
+.ai-hero-deco {
+  position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
+  font-size: 280px; font-weight: 900; color: rgba(29,158,117,0.05);
+  line-height: 1; pointer-events: none; user-select: none; white-space: nowrap;
+}
+.ai-hero-icon { font-size: 68px; display: block; margin-bottom: 18px; animation: floatSake 3.5s ease-in-out infinite; }
+@keyframes floatSake { 0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-10px) rotate(3deg)} }
+.ai-hero-title { font-size: 26px; font-weight: 700; color: var(--text); margin-bottom: 12px; line-height: 1.5; }
+.ai-hero-title-en { font-size: 11px; letter-spacing: 3px; color: var(--accent); display: block; margin-bottom: 8px; text-transform: uppercase; }
+.ai-hero-meta {
+  display: inline-flex; align-items: center; gap: 10px; margin-bottom: 28px;
+  background: white; border: 1px solid var(--border); border-radius: 20px;
+  padding: 6px 18px; font-size: 13px; color: var(--text-muted);
+}
+.ai-hero-meta-sep { color: var(--accent); }
+.ai-hero-features { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 32px; }
+.ai-feat-chip { background: white; border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 12px; color: var(--text-muted); }
+.ai-start-btn {
+  display: inline-flex; align-items: center; gap: 12px;
+  background: var(--cta); color: white; border: none;
+  padding: 16px 44px; border-radius: 50px; font-size: 17px; font-weight: 700;
+  cursor: pointer; font-family: inherit; margin-bottom: 16px;
+  box-shadow: 0 6px 24px rgba(216,90,48,0.28);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.ai-start-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(216,90,48,0.38); background: var(--cta-hover); }
+.ai-start-arrow { font-size: 22px; display: inline-block; transition: transform 0.2s; }
+.ai-start-btn:hover .ai-start-arrow { transform: translateX(5px); }
+.ai-hero-note { font-size: 11px; color: #9ca3af; letter-spacing: 0.5px; }
+.ai-ornament { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+.ai-ornament::before,.ai-ornament::after { content:''; flex:1; height:1px; background: var(--border); }
+.ai-ornament span { font-size: 18px; color: var(--accent); flex-shrink: 0; }
+
+/* QUIZ */
 .ai-quiz { display: none; }
 .ai-quiz.active { display: block; }
-.quiz-steps-indicator { display: flex; gap: 5px; margin-bottom: 18px; justify-content: center; }
-.step-dot { width: 26px; height: 4px; border-radius: 2px; background: #d4c4a8; transition: background 0.3s; }
-.step-dot.done { background: var(--accent); }
-.step-dot.active { background: var(--bg); }
-.quiz-step { background: white; border-radius: 12px; padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
-.quiz-progress { font-size: 12px; color: #8a7a6a; margin-bottom: 5px; letter-spacing: 1px; }
-.quiz-q { font-size: 19px; font-weight: bold; color: #1a0a00; margin-bottom: 20px; line-height: 1.4; }
-.quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* Progress bar */
+.quiz-progress-wrap { margin-bottom: 20px; }
+.quiz-progress-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+.quiz-progress-label { font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; }
+.quiz-progress-frac { font-size: 12px; color: var(--accent); font-weight: bold; }
+.quiz-progress-track {
+  height: 5px; background: var(--border); border-radius: 3px; overflow: hidden;
+}
+.quiz-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Question card */
+.quiz-card {
+  background: white; border-radius: 18px; padding: 36px 32px;
+  box-shadow: 0 4px 28px rgba(0,0,0,0.09);
+  border-top: 4px solid var(--accent);
+  animation: cardIn 0.32s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes cardIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+.quiz-q-label {
+  font-size: 10px; color: var(--accent); font-weight: bold; letter-spacing: 3px;
+  text-transform: uppercase; margin-bottom: 10px; display: block;
+}
+.quiz-q { font-size: 22px; font-weight: 900; color: var(--text); margin-bottom: 28px; line-height: 1.45; }
+
+/* Option buttons */
+.quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .quiz-option {
-  background: #f8f0e4; border: 2px solid #d4c4a8; border-radius: 10px;
-  padding: 16px 14px; cursor: pointer; text-align: center; font-size: 14px;
-  font-family: inherit; transition: all 0.2s; color: #2a1505; line-height: 1.4;
+  background: white; border: 2px solid var(--border); border-radius: 14px;
+  padding: 20px 14px; cursor: pointer; text-align: center; font-size: 14px;
+  font-family: inherit; transition: all 0.2s; color: var(--text); line-height: 1.45;
+  position: relative; overflow: hidden;
 }
-.quiz-option:hover { border-color: var(--accent); background: #f0e8d0; transform: translateY(-2px); }
-.quiz-option.selected { border-color: var(--accent); background: var(--bg); color: var(--accent); }
-.quiz-option .opt-icon { font-size: 22px; display: block; margin-bottom: 5px; }
-.quiz-analyzing { display: none; text-align: center; padding: 36px; background: white; border-radius: 12px; margin-top: 18px; }
-.quiz-analyzing.active { display: block; }
-.analyzing-spinner {
-  width: 44px; height: 44px; border: 3px solid #f0e8dc;
-  border-top-color: var(--accent); border-radius: 50%;
-  animation: spin 0.8s linear infinite; margin: 0 auto 14px;
+.quiz-option::before {
+  content:''; position:absolute; inset:0;
+  background: linear-gradient(135deg, rgba(29,158,117,0) 0%, rgba(29,158,117,0.06) 100%);
+  opacity:0; transition: opacity 0.2s;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
-.quiz-result { display: none; margin-top: 22px; }
-.quiz-result.active { display: block; }
-.quiz-result-title { font-size: 20px; font-weight: 900; color: #1a0a00; margin-bottom: 4px; }
-.quiz-result-sub { font-size: 13px; color: #8a7a6a; margin-bottom: 20px; }
-.result-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.quiz-option:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 6px 16px rgba(29,158,117,0.14); }
+.quiz-option:hover::before { opacity:1; }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-light); color: var(--accent-mid); box-shadow: 0 4px 16px rgba(29,158,117,0.2); }
+.quiz-option.selected::before { display:none; }
+.opt-icon { font-size: 30px; display: block; margin-bottom: 8px; }
+
+/* Analyzing */
+.quiz-analyzing {
+  display: none; text-align: center; padding: 64px 24px;
+  background: white; border-radius: 18px;
+  box-shadow: 0 4px 28px rgba(0,0,0,0.09);
+}
+.quiz-analyzing.active { display: block; animation: cardIn 0.32s ease; }
+.analyzing-sake { font-size: 64px; display: block; margin-bottom: 20px; animation: sakeRock 1.4s ease-in-out infinite; }
+@keyframes sakeRock { 0%,100%{transform:rotate(-10deg)} 50%{transform:rotate(10deg)} }
+.analyzing-title { font-size: 18px; font-weight: bold; color: var(--text); margin-bottom: 8px; }
+.analyzing-sub { font-size: 13px; color: var(--text-muted); }
+.analyzing-dots span { display:inline-block; animation: dotBlink 1.3s ease-in-out infinite; }
+.analyzing-dots span:nth-child(2) { animation-delay:0.2s; }
+.analyzing-dots span:nth-child(3) { animation-delay:0.4s; }
+@keyframes dotBlink { 0%,80%,100%{opacity:0.15} 40%{opacity:1} }
+
+/* Results */
+.quiz-result { display: none; }
+.quiz-result.active { display: block; animation: cardIn 0.35s ease; }
+.result-header { text-align: center; margin-bottom: 28px; padding: 0 8px; }
+.result-header-icon { font-size: 44px; display: block; margin-bottom: 12px; }
+.quiz-result-title { font-size: 22px; font-weight: 900; color: var(--text); margin-bottom: 6px; }
+.quiz-result-sub { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+.result-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
 .result-card {
-  background: white; border-radius: 12px; overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1); position: relative;
-  border: 2px solid transparent; transition: transform 0.2s, box-shadow 0.2s;
+  background: white; border-radius: 16px; overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.09); position: relative;
+  border: 2px solid transparent; transition: transform 0.22s, box-shadow 0.22s;
 }
-.result-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+.result-card:hover { transform: translateY(-5px); box-shadow: 0 12px 32px rgba(0,0,0,0.14); }
 .result-card.rank-1 { border-color: var(--accent); }
-.rank-badge { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 4px; }
-.rank-badge.gold   { background: #f5c842; color: #5a3a00; }
-.rank-badge.silver { background: #c0c8d0; color: #3a4048; }
-.rank-badge.bronze { background: #d4916a; color: #5a2010; }
-.result-label { width: 100%; aspect-ratio: 3/2; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-.match-score { position: absolute; bottom: 6px; right: 6px; z-index: 2; background: rgba(0,0,0,0.55); color: white; font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 10px; }
-.result-card-body { padding: 12px; }
-.result-card-kura { font-size: 11px; color: #8a7a6a; margin-bottom: 2px; }
-.result-card-name { font-size: 15px; font-weight: 900; color: #1a0a00; margin-bottom: 5px; line-height: 1.3; }
-.result-taste-bars { margin-bottom: 10px; }
-.result-taste-row { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
-.result-taste-label { font-size: 9px; color: #8a7a6a; width: 28px; flex-shrink: 0; }
-.result-taste-track { flex: 1; height: 3px; background: #f0e8dc; border-radius: 2px; overflow: hidden; }
-.result-taste-fill { height: 100%; border-radius: 2px; background: var(--accent); }
-.result-desc { font-size: 11px; color: #6a5040; line-height: 1.5; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.rank-badge {
+  position: absolute; top: 10px; left: 10px; z-index: 2;
+  font-size: 11px; font-weight: bold; padding: 3px 9px; border-radius: 6px;
+}
+.rank-badge.gold   { background: linear-gradient(135deg,#f7cf50,#d9940a); color: #3a2000; }
+.rank-badge.silver { background: linear-gradient(135deg,#d8e0e8,#9aaab8); color: #283040; }
+.rank-badge.bronze { background: linear-gradient(135deg,#d89868,#a05838); color: #3a1808; }
+
+.result-label { width: 100%; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.match-score {
+  position: absolute; bottom: 8px; right: 8px; z-index: 2;
+  background: rgba(0,0,0,0.62); color: white; font-size: 11px;
+  font-weight: bold; padding: 3px 9px; border-radius: 12px; backdrop-filter: blur(4px);
+}
+.result-card-body { padding: 14px; }
+.result-card-kura { font-size: 11px; color: var(--text-muted); margin-bottom: 3px; }
+.result-card-name { font-size: 16px; font-weight: 900; color: var(--text); margin-bottom: 8px; line-height: 1.3; }
+.result-taste-bars { margin-bottom: 12px; }
+.result-taste-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.result-taste-label { font-size: 10px; color: var(--text-muted); width: 30px; flex-shrink: 0; }
+.result-taste-track { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.result-taste-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent-mid), var(--accent)); }
+.result-desc { font-size: 12px; color: var(--text-muted); line-height: 1.65; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-clamp: 3; }
 .btn-buy-result {
-  display: block; width: 100%; text-align: center; padding: 9px;
-  background: var(--accent); color: var(--bg); border: none; border-radius: 6px;
-  font-size: 12px; font-weight: bold; cursor: pointer; font-family: inherit; text-decoration: none; transition: opacity 0.2s;
+  display: block; width: 100%; text-align: center; padding: 11px;
+  background: white; color: var(--accent); border: 1.5px solid var(--accent); border-radius: 8px;
+  font-size: 13px; font-weight: bold; cursor: pointer; font-family: inherit; text-decoration: none; transition: all 0.2s;
 }
-.btn-buy-result:hover { opacity: 0.85; }
+.btn-buy-result:hover { background: var(--accent-light); }
 .quiz-retry-btn {
-  margin-top: 20px; background: none; border: 2px solid var(--accent);
-  color: var(--accent); padding: 9px 24px; border-radius: 6px; font-size: 13px;
-  font-weight: bold; cursor: pointer; font-family: inherit; transition: background 0.2s;
+  margin-top: 28px; background: none; border: 2px solid var(--accent);
+  color: var(--accent); padding: 12px 36px; border-radius: 50px; font-size: 14px;
+  font-weight: bold; cursor: pointer; font-family: inherit; transition: all 0.2s;
 }
-.quiz-retry-btn:hover { background: rgba(200,169,110,0.1); }
-.ai-small-badge {
-  display: inline-block; background: #e8f4e8; color: #2a5a2a; border: 1px solid #a8d4a8;
-  border-radius: 4px; font-size: 11px; padding: 3px 8px; margin-bottom: 16px;
-}
+.quiz-retry-btn:hover { background: var(--accent-light); transform: translateY(-2px); }
 
 /* ===== MAP ===== */
 #page-map { display: none; height: calc(100vh - 56px); }
 #page-map.active { display: flex; flex-direction: column; }
 .map-layout { display: flex; flex: 1; overflow: hidden; }
+
+/* サイドバー */
 .map-sidebar {
-  width: 280px; flex-shrink: 0; background: #f8f0e4;
-  border-right: 1px solid #d4c4a8; display: flex; flex-direction: column; overflow: hidden;
+  width: 300px; flex-shrink: 0; background: var(--cream);
+  border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden;
 }
-.map-filter-tabs { display: flex; border-bottom: 1px solid #d4c4a8; background: #f0e4cc; flex-shrink: 0; }
-.map-filter-tab {
-  flex: 1; background: none; border: none; padding: 10px 4px; font-size: 11px;
-  cursor: pointer; font-family: inherit; color: #6a5040; transition: all 0.2s; border-bottom: 2px solid transparent;
+
+/* 検索エリア */
+.map-search-area {
+  padding: 12px 12px 0; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 8px;
+  border-bottom: 1px solid var(--border); background: var(--cream);
 }
-.map-filter-tab.active { color: var(--bg); border-bottom-color: var(--accent); font-weight: bold; }
+.map-search-row {
+  display: flex; align-items: center; gap: 6px;
+  background: white; border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 7px 10px; transition: border-color 0.2s;
+}
+.map-search-row:focus-within { border-color: var(--accent); }
+.map-search-icon { font-size: 14px; flex-shrink: 0; opacity: 0.5; }
+.map-search-input {
+  flex: 1; border: none; outline: none; font-size: 13px;
+  font-family: inherit; color: var(--text); background: transparent;
+}
+.map-search-input::placeholder { color: #9ca3af; }
+.map-search-clear {
+  background: none; border: none; cursor: pointer; color: var(--text-muted);
+  font-size: 16px; line-height: 1; padding: 0; display: none;
+}
+.map-search-clear.visible { display: block; }
+
+.map-pref-select {
+  width: 100%; border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 8px 10px; font-size: 13px; font-family: inherit;
+  color: var(--text); background: white; outline: none;
+  cursor: pointer; transition: border-color 0.2s; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  padding-right: 28px;
+}
+.map-pref-select:focus { border-color: var(--accent); }
+
+/* 種別タブ */
+.map-type-tabs {
+  display: flex; gap: 6px; padding: 10px 12px 10px;
+  background: var(--cream); flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+.map-type-tab {
+  flex: 1; background: white; border: 1.5px solid var(--border);
+  border-radius: 20px; padding: 5px 4px; font-size: 11px;
+  cursor: pointer; font-family: inherit; color: var(--text-muted);
+  transition: all 0.18s; text-align: center; font-weight: 500;
+  white-space: nowrap;
+}
+.map-type-tab:hover { border-color: var(--accent); color: var(--text); }
+.map-type-tab.active {
+  background: var(--accent-light); border-color: var(--accent);
+  color: var(--accent-mid); font-weight: bold;
+}
+.map-type-tab.tab-brewery.active { background: #1D9E75; border-color: #1D9E75; color: white; }
+.map-type-tab.tab-shop.active    { background: #D85A30; border-color: #D85A30; color: white; }
+.map-type-tab.tab-restaurant.active { background: #6b7280; border-color: #6b7280; color: white; }
+
+/* 件数 */
+.map-result-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 14px; background: #f9fafb; border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.map-result-count { font-size: 12px; color: var(--text-muted); }
+.map-result-count strong { color: var(--text); font-size: 14px; }
+.map-reset-btn {
+  background: none; border: none; font-size: 11px; color: var(--text-muted);
+  cursor: pointer; font-family: inherit; text-decoration: underline; padding: 0;
+}
+.map-reset-btn:hover { color: var(--accent); }
+
+/* リスト */
 .map-list-wrap { flex: 1; overflow-y: auto; }
 .map-list-item {
-  padding: 10px 14px; border-bottom: 1px solid #e8d8c0; cursor: pointer;
-  transition: background 0.15s;
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 11px 14px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.15s;
 }
-.map-list-item:hover { background: #e8d4b8; }
-.map-list-name { font-size: 13px; font-weight: bold; color: #1a0a00; }
-.map-list-meta { font-size: 11px; color: #8a7a6a; margin-top: 2px; }
-.map-list-dot {
-  display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px;
+.map-list-item:hover { background: var(--accent-light); }
+.map-list-item.highlighted { background: #fef9e5; }
+.map-list-pin {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; margin-top: 1px; color: white; font-weight: bold;
 }
+.map-list-body { flex: 1; min-width: 0; }
+.map-list-name {
+  font-size: 13px; font-weight: bold; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.map-list-name em { font-style: normal; background: #fde88a; border-radius: 2px; }
+.map-list-meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; display: flex; gap: 6px; flex-wrap: wrap; }
+.map-list-type-badge {
+  font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: bold;
+}
+
+/* マップ本体 */
 .map-main { flex: 1; position: relative; min-height: 0; }
 #mapCanvas { position: absolute; inset: 0; }
 .map-nokey {
   position: absolute; inset: 0; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 10px;
-  background: #f0e8dc; text-align: center; padding: 24px;
+  background: var(--cream); text-align: center; padding: 24px;
 }
 .map-nokey-icon { font-size: 56px; }
-.map-nokey-title { font-size: 16px; font-weight: bold; color: #1a0a00; }
-.map-nokey-sub { font-size: 13px; color: #8a7a6a; max-width: 360px; line-height: 1.6; }
+.map-nokey-title { font-size: 16px; font-weight: bold; color: var(--text); }
+.map-nokey-sub { font-size: 13px; color: var(--text-muted); max-width: 360px; line-height: 1.6; }
 .map-locate-btn {
-  background: var(--bg); color: var(--accent); border: none;
+  background: white; color: var(--accent); border: 1.5px solid var(--accent);
   padding: 10px 22px; border-radius: 6px; font-size: 14px; font-weight: bold;
-  cursor: pointer; font-family: inherit; margin-top: 6px;
+  cursor: pointer; font-family: inherit; margin-top: 6px; transition: background 0.2s;
 }
-.map-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(240,232,220,0.8); font-size: 15px; color: #6a5040; }
+.map-locate-btn:hover { background: var(--accent-light); }
+.map-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(250,250,248,0.9); font-size: 15px; color: var(--text-muted); }
+
+@media (max-width: 768px) {
+  .map-sidebar { width: 100%; max-height: 260px; border-right: none; border-bottom: 1px solid var(--border); }
+}
 
 /* ===== SCAN ===== */
 .scan-wrap { max-width: 680px; margin: 40px auto; padding: 0 20px; }
@@ -345,40 +707,42 @@ nav { display: flex; align-items: center; gap: 0; flex: 1; justify-content: cent
 }
 .scan-drop-zone {
   flex: 1; background: white; border-radius: 12px; padding: 32px 20px;
-  text-align: center; border: 2px dashed #d4c4a8; cursor: pointer;
+  text-align: center; border: 2px dashed var(--border); cursor: pointer;
   transition: border-color 0.2s;
 }
 .scan-drop-zone:hover { border-color: var(--accent); }
 .scan-icon-big { font-size: 48px; margin-bottom: 12px; }
-.scan-drop-text { font-size: 15px; color: #3a2510; font-weight: bold; margin-bottom: 6px; }
-.scan-drop-sub { font-size: 12px; color: #8a7a6a; margin-bottom: 14px; }
+.scan-drop-text { font-size: 15px; color: var(--text); font-weight: bold; margin-bottom: 6px; }
+.scan-drop-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
 .scan-file-btn {
-  background: var(--bg); color: var(--accent); border: none;
+  background: white; color: var(--accent); border: 1.5px solid var(--accent);
   padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: bold;
-  cursor: pointer; font-family: inherit;
+  cursor: pointer; font-family: inherit; transition: background 0.2s;
 }
+.scan-file-btn:hover { background: var(--accent-light); }
 .scan-camera-box {
   width: 160px; background: white; border-radius: 12px; padding: 20px;
-  text-align: center; border: 2px solid #d4c4a8; display: flex;
+  text-align: center; border: 2px solid var(--border); display: flex;
   flex-direction: column; align-items: center; justify-content: center; gap: 10px;
 }
 .scan-camera-icon { font-size: 40px; }
 .scan-camera-btn {
-  background: #2a5a2a; color: white; border: none;
+  background: var(--accent); color: white; border: none;
   padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: bold;
-  cursor: pointer; font-family: inherit; width: 100%;
+  cursor: pointer; font-family: inherit; width: 100%; transition: background 0.2s;
 }
+.scan-camera-btn:hover { background: var(--accent-mid); }
 .scan-video-wrap { position: relative; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 12px; display: none; }
 #scanVideo { width: 100%; max-height: 300px; display: block; }
 .scan-capture-btn {
   position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
-  background: white; color: #1a0a00; border: none; border-radius: 50px;
+  background: white; color: var(--text); border: none; border-radius: 50px;
   padding: 10px 24px; font-size: 14px; font-weight: bold; cursor: pointer; font-family: inherit;
 }
 canvas#scanCanvas { display: none; }
 .scan-nokey {
-  background: #fff8e8; border: 1px solid #e8c870; border-radius: 8px;
-  padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #5a4010;
+  background: #fffbeb; border: 1px solid #fbbf24; border-radius: 8px;
+  padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #92400e;
 }
 .scan-loading { display: none; text-align: center; padding: 32px; background: white; border-radius: 12px; margin-bottom: 16px; }
 .scan-loading.active { display: block; }
@@ -386,31 +750,59 @@ canvas#scanCanvas { display: none; }
 .scan-result-card.active { display: block; }
 .scan-result-img { width: 100%; max-height: 240px; object-fit: cover; }
 .scan-result-info { padding: 20px; }
-.scan-recognized { font-size: 12px; color: #2a8a3a; font-weight: bold; margin-bottom: 10px; }
-.scan-sake-name { font-size: 22px; font-weight: 900; color: #1a0a00; margin-bottom: 4px; }
-.scan-sake-brewery { font-size: 14px; color: #8a7a6a; margin-bottom: 14px; }
+.scan-recognized { font-size: 12px; color: var(--accent); font-weight: bold; margin-bottom: 10px; }
+.scan-sake-name { font-size: 22px; font-weight: 900; color: var(--text); margin-bottom: 4px; }
+.scan-sake-brewery { font-size: 14px; color: var(--text-muted); margin-bottom: 14px; }
 .scan-pairing { margin-bottom: 16px; }
-.scan-pairing-title { font-size: 11px; font-weight: bold; color: #8a7a6a; letter-spacing: 1px; margin-bottom: 6px; }
+.scan-pairing-title { font-size: 11px; font-weight: bold; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 6px; }
 .scan-pairing-chips { display: flex; gap: 6px; flex-wrap: wrap; }
-.scan-pairing-chip { background: #f0e8dc; color: #5a3a20; border: 1px solid #d4c4a8; border-radius: 20px; padding: 3px 10px; font-size: 12px; }
+.scan-pairing-chip { background: var(--accent-light); color: var(--accent-mid); border: 1px solid rgba(29,158,117,0.2); border-radius: 20px; padding: 3px 10px; font-size: 12px; }
 .scan-not-found { background: #fff0f0; border: 1px solid #e8a0a0; border-radius: 8px; padding: 16px; font-size: 14px; color: #8a2020; display: none; }
 .scan-not-found.active { display: block; }
+.scan-step-msg { font-size: 12px; color: var(--accent); margin-top: 6px; min-height: 18px; }
+.scan-section-label { font-size: 11px; font-weight: bold; color: var(--text-muted); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px; }
+.scan-taste-bars { margin: 0 0 14px; }
+.scan-taste-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.scan-taste-key { font-size: 11px; color: var(--text-muted); width: 34px; text-align: right; flex-shrink: 0; }
+.scan-taste-bar-wrap { flex: 1; height: 6px; background: #f0ede8; border-radius: 3px; }
+.scan-taste-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.5s ease; }
+.scan-story-text { font-size: 13px; color: var(--text); line-height: 1.65; background: var(--accent-light); padding: 10px 12px; border-radius: 8px; border-left: 3px solid var(--accent); margin-bottom: 14px; }
+.scan-price-tag { font-size: 13px; color: var(--accent-mid); font-weight: 600; margin-bottom: 14px; }
+.scan-record-btn { width: 100%; margin-top: 4px; background: var(--accent-mid); color: white; border: none; border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+.scan-record-btn:hover { background: var(--accent); }
+.scan-record-btn.recorded { background: #6b7280; cursor: default; }
+.scan-menu-section { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
+.scan-menu-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.scan-menu-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+.scan-menu-drop { border: 2px dashed var(--border); border-radius: 12px; padding: 28px; text-align: center; cursor: pointer; background: var(--cream); transition: border-color 0.2s; }
+.scan-menu-drop:hover { border-color: var(--accent); }
+.scan-menu-loading { display: none; text-align: center; padding: 24px; background: white; border-radius: 12px; margin-top: 12px; }
+.scan-menu-loading.active { display: block; }
+.scan-menu-results { margin-top: 16px; }
+.scan-menu-item { background: white; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; border: 1px solid var(--border); display: flex; align-items: flex-start; gap: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.scan-menu-rank { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: white; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.scan-menu-rank.rank-2 { background: #b08840; }
+.scan-menu-rank.rank-3 { background: #7a8080; }
+.scan-menu-info { flex: 1; }
+.scan-menu-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.scan-menu-reason { font-size: 11px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
+.scan-menu-score { font-size: 13px; color: var(--accent-mid); font-weight: 700; flex-shrink: 0; }
 
 /* ===== TIMELINE ===== */
 .timeline-layout { max-width: 640px; margin: 0 auto; padding: 20px; }
 .timeline-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.timeline-tabs { display: flex; gap: 0; background: white; border-radius: 8px; padding: 4px; }
+.timeline-tabs { display: flex; gap: 0; background: #f3f4f6; border-radius: 8px; padding: 4px; }
 .tl-tab {
   background: none; border: none; padding: 7px 16px; border-radius: 6px;
-  font-size: 13px; font-family: inherit; cursor: pointer; color: #6a5040; transition: all 0.2s;
+  font-size: 13px; font-family: inherit; cursor: pointer; color: var(--text-muted); transition: all 0.2s;
 }
-.tl-tab.active { background: var(--bg); color: var(--accent); font-weight: bold; }
+.tl-tab.active { background: white; color: var(--accent); font-weight: bold; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
 .tl-post-btn {
-  background: var(--accent); color: var(--bg); border: none;
+  background: var(--accent); color: white; border: none;
   padding: 9px 18px; border-radius: 8px; font-size: 14px; font-weight: bold;
-  cursor: pointer; font-family: inherit; transition: opacity 0.2s;
+  cursor: pointer; font-family: inherit; transition: background 0.2s;
 }
-.tl-post-btn:hover { opacity: 0.85; }
+.tl-post-btn:hover { background: var(--accent-mid); }
 .timeline-posts { display: flex; flex-direction: column; gap: 14px; }
 .tl-post { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 .tl-post-img { width: 100%; max-height: 280px; object-fit: cover; }
@@ -421,14 +813,62 @@ canvas#scanCanvas { display: none; }
   display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: bold; color: white;
 }
 .tl-post-meta { flex: 1; }
-.tl-post-user { font-size: 13px; font-weight: bold; color: #1a0a00; }
-.tl-post-time { font-size: 11px; color: #8a7a6a; }
-.tl-private-badge { background: #f0e8dc; color: #8a5020; font-size: 10px; padding: 2px 6px; border-radius: 3px; border: 1px solid #d4b888; }
-.tl-sake-tag { display: inline-block; background: #f0e8dc; color: #5a3a20; border: 1px solid #d4c4a8; border-radius: 4px; padding: 3px 9px; font-size: 12px; margin-bottom: 8px; }
-.tl-location-tag { font-size: 11px; color: #8a7a6a; margin-bottom: 8px; }
-.tl-comment { font-size: 14px; color: #2a1505; line-height: 1.6; }
-.tl-loading { text-align: center; padding: 40px; color: #8a7a6a; }
-.tl-empty { text-align: center; padding: 40px; color: #8a7a6a; font-size: 15px; }
+.tl-post-user { font-size: 13px; font-weight: bold; color: var(--text); }
+.tl-post-time { font-size: 11px; color: var(--text-muted); }
+.tl-private-badge { background: #f3f4f6; color: var(--text-muted); font-size: 10px; padding: 2px 6px; border-radius: 3px; border: 1px solid var(--border); }
+.tl-sake-tag { display: inline-block; background: var(--accent-light); color: var(--accent-mid); border: 1px solid rgba(29,158,117,0.2); border-radius: 4px; padding: 3px 9px; font-size: 12px; margin-bottom: 8px; }
+.tl-location-tag { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+.tl-comment { font-size: 14px; color: var(--text); line-height: 1.6; }
+.tl-loading { text-align: center; padding: 40px; color: var(--text-muted); }
+.tl-empty { text-align: center; padding: 40px; color: var(--text-muted); font-size: 15px; }
+
+/* ===== MY PAGE ===== */
+.mypage-wrap { max-width: 980px; margin: 0 auto; padding: 28px 20px 54px; }
+.mypage-profile-card {
+  background: white; border: 1px solid var(--border); border-radius: 14px;
+  padding: 24px; display: grid; grid-template-columns: auto 1fr; gap: 16px; margin-bottom: 18px;
+}
+.mypage-avatar {
+  width: 82px; height: 82px; border-radius: 50%; background: #f2f5f1; border: 1px solid #dce5da;
+  display: flex; align-items: center; justify-content: center; font-size: 34px; color: var(--accent);
+}
+.mypage-name { font-size: 22px; color: var(--text); margin-bottom: 6px; }
+.mypage-bio { font-size: 13px; color: var(--text-muted); line-height: 1.7; margin-bottom: 12px; }
+.mypage-edit-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.mypage-input, .mypage-textarea {
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: inherit;
+}
+.mypage-input { width: 170px; }
+.mypage-textarea { width: 100%; min-height: 70px; resize: vertical; }
+.mypage-save-btn {
+  background: var(--accent); color: white; border: none; border-radius: 8px; padding: 8px 14px; cursor: pointer;
+  font-family: inherit; font-size: 13px; font-weight: 700;
+}
+.mypage-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+.mypage-stat {
+  background: #fafaf8; border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-align: center;
+}
+.mypage-stat-value { font-size: 24px; color: var(--accent); font-weight: 700; line-height: 1.2; }
+.mypage-stat-label { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.mypage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.mypage-block { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+.mypage-block h3 { font-size: 16px; margin-bottom: 10px; color: var(--text); }
+.mypage-list { display: flex; flex-direction: column; gap: 8px; }
+.mypage-item {
+  border: 1px solid #e8ece7; border-radius: 10px; padding: 10px; background: #fcfdfc;
+  font-size: 13px; color: var(--text);
+}
+.mypage-item-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.mypage-empty { font-size: 12px; color: var(--text-muted); padding: 6px 2px; }
+.mypage-link-btn {
+  margin-top: 7px; border: 1px solid #c8d8c5; color: var(--accent); background: #f3f8f2;
+  border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer; font-family: inherit;
+}
+.mypage-setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid #eef2ec; padding: 8px 0; font-size: 13px;
+}
+.mypage-setting-row:last-child { border-bottom: none; }
 
 /* ===== POST MODAL ===== */
 .modal-overlay {
@@ -443,36 +883,36 @@ canvas#scanCanvas { display: none; }
 }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.modal-title { font-size: 18px; font-weight: 900; color: #1a0a00; }
-.modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #8a7a6a; line-height: 1; }
+.modal-title { font-size: 18px; font-weight: 900; color: var(--text); }
+.modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); line-height: 1; }
 .form-group { margin-bottom: 16px; }
-.form-label { font-size: 13px; font-weight: bold; color: #3a2510; margin-bottom: 6px; display: block; }
+.form-label { font-size: 13px; font-weight: bold; color: var(--text); margin-bottom: 6px; display: block; }
 .form-label .req { color: #e84b4b; }
 .photo-upload-area {
-  border: 2px dashed #d4c4a8; border-radius: 10px; overflow: hidden;
+  border: 2px dashed var(--border); border-radius: 10px; overflow: hidden;
   cursor: pointer; transition: border-color 0.2s; min-height: 140px;
   display: flex; align-items: center; justify-content: center; position: relative;
 }
 .photo-upload-area:hover { border-color: var(--accent); }
-.photo-upload-placeholder { text-align: center; color: #8a7a6a; padding: 20px; }
+.photo-upload-placeholder { text-align: center; color: var(--text-muted); padding: 20px; }
 .photo-upload-placeholder div:first-child { font-size: 36px; margin-bottom: 6px; }
 #postPhotoPreview { width: 100%; max-height: 240px; object-fit: cover; display: none; }
 .form-select, .form-textarea {
-  width: 100%; border: 1px solid #d4c4a8; border-radius: 8px;
-  padding: 10px 12px; font-size: 14px; font-family: inherit; color: #2a1505;
+  width: 100%; border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--text);
   outline: none; background: white; transition: border-color 0.2s;
 }
-.form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+.form-select:focus, .form-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,158,117,0.08); }
 .form-textarea { min-height: 90px; resize: vertical; }
 .radio-group { display: flex; gap: 20px; }
-.radio-label { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #2a1505; cursor: pointer; }
+.radio-label { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text); cursor: pointer; }
 .radio-label input { accent-color: var(--accent); width: 16px; height: 16px; }
 .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
-.toggle-row span { font-size: 14px; color: #2a1505; }
+.toggle-row span { font-size: 14px; color: var(--text); }
 .toggle-switch { position: relative; width: 44px; height: 24px; }
 .toggle-switch input { opacity: 0; width: 0; height: 0; }
 .toggle-slider {
-  position: absolute; inset: 0; background: #d4c4a8; border-radius: 12px;
+  position: absolute; inset: 0; background: #d1d5db; border-radius: 12px;
   cursor: pointer; transition: background 0.2s;
 }
 .toggle-slider::before {
@@ -482,94 +922,657 @@ canvas#scanCanvas { display: none; }
 .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
 .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
 .submit-btn {
-  width: 100%; background: var(--accent); color: var(--bg); border: none;
+  width: 100%; background: var(--cta); color: white; border: none;
   padding: 14px; border-radius: 8px; font-size: 15px; font-weight: bold;
-  cursor: pointer; font-family: inherit; transition: opacity 0.2s; margin-top: 8px;
+  cursor: pointer; font-family: inherit; transition: background 0.2s; margin-top: 8px;
 }
-.submit-btn:hover { opacity: 0.85; }
+.submit-btn:hover { background: var(--cta-hover); }
 .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ===== AUTH MODAL ===== */
+#authModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  align-items: center;
+  justify-content: center;
+  z-index: 400;
+}
+#authModal.active { display: flex; }
+.auth-modal {
+  position: relative;
+  background: white; border-radius: 16px; width: min(420px, calc(100% - 24px));
+  border: 1px solid var(--border); padding: 24px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  box-shadow: 0 20px 48px rgba(0,0,0,0.18);
+}
+.auth-title { font-size: 22px; color: var(--text); margin-bottom: 18px; font-weight: 700; }
+.auth-google-btn {
+  width: 100%; border: 2px solid var(--accent); border-radius: 10px; padding: 12px;
+  background: #f0faf5; color: var(--accent-mid); font-size: 15px; cursor: pointer; font-family: inherit; font-weight: 700;
+  transition: all 0.2s;
+}
+.auth-google-btn:hover { background: var(--accent-light); border-color: var(--accent-mid); }
+.auth-sep {
+  display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: 12px; margin: 16px 0;
+}
+.auth-sep::before, .auth-sep::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.auth-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: block; }
+.auth-input {
+  width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px;
+  font-size: 14px; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+}
+.auth-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(29,158,117,0.08); }
+.auth-submit {
+  width: 100%; background: var(--cta); border: none; border-radius: 8px; color: white;
+  padding: 12px; cursor: pointer; font-family: inherit; font-size: 15px; font-weight: 700;
+  transition: background 0.2s;
+}
+.auth-submit:hover { background: var(--cta-hover); }
+.auth-link {
+  display: block;
+  margin: 10px auto 0;
+  background: none; border: none; color: var(--accent); font-size: 13px; cursor: pointer; font-family: inherit;
+}
+.auth-msg { font-size: 12px; color: #c04040; min-height: 18px; margin-top: 6px; }
 
 /* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: #f0e8dc; }
-::-webkit-scrollbar-thumb { background: #c4b49a; border-radius: 3px; }
+::-webkit-scrollbar-track { background: var(--cream); }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* ===== ONBOARDING MODAL ===== */
+.onboarding-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+  z-index: 500; align-items: center; justify-content: center; padding: 20px;
+}
+.onboarding-overlay.active { display: flex; }
+.onboarding-modal {
+  background: white; border-radius: 20px; max-width: 420px; width: 100%;
+  padding: 36px 28px; position: relative;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+  animation: cardIn 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+.onboarding-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 30px; }
+.onboarding-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--border);
+  transition: background 0.3s, transform 0.3s, width 0.3s;
+}
+.onboarding-dot.active { background: var(--accent); transform: scale(1.3); width: 20px; border-radius: 4px; }
+.onboarding-step-icon { font-size: 60px; text-align: center; display: block; margin-bottom: 20px; animation: floatSake 3s ease-in-out infinite; }
+.onboarding-step-title { font-size: 22px; font-weight: 900; color: var(--text); text-align: center; margin-bottom: 12px; line-height: 1.45; }
+.onboarding-step-desc { font-size: 14px; color: var(--text-muted); text-align: center; line-height: 1.8; margin-bottom: 30px; }
+.onboarding-actions { display: flex; flex-direction: column; gap: 10px; }
+.onboarding-next-btn {
+  width: 100%; background: var(--accent); color: white; border: none;
+  padding: 16px; border-radius: 50px; font-size: 16px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: all 0.2s; min-height: 52px;
+}
+.onboarding-next-btn:hover { background: var(--accent-mid); transform: translateY(-2px); }
+.onboarding-start-btn {
+  width: 100%; background: var(--cta); color: white; border: none;
+  padding: 16px; border-radius: 50px; font-size: 16px; font-weight: 700;
+  cursor: pointer; font-family: inherit; min-height: 52px;
+  box-shadow: 0 4px 16px rgba(216,90,48,0.28); transition: all 0.2s;
+}
+.onboarding-start-btn:hover { background: var(--cta-hover); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(216,90,48,0.35); }
+.onboarding-skip-btn {
+  background: none; border: none; color: var(--text-muted);
+  font-size: 13px; cursor: pointer; font-family: inherit;
+  text-align: center; padding: 8px; min-height: 44px;
+}
+.onboarding-skip-btn:hover { color: var(--text); }
+
+/* ===== SKELETON CARDS ===== */
+.skeleton-sake-card {
+  background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden;
+}
+.skeleton-media {
+  width: 100%; aspect-ratio: 3/4;
+  background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);
+  background-size: 200% 100%; animation: skeleton-shine 1.4s ease infinite;
+}
+.skeleton-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.skeleton-line {
+  height: 12px; border-radius: 4px;
+  background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);
+  background-size: 200% 100%; animation: skeleton-shine 1.4s ease infinite;
+}
+.skeleton-line.lg { height: 22px; }
+.skeleton-line.w75 { width: 75%; }
+.skeleton-line.w50 { width: 50%; }
+.skeleton-btn-row { display: flex; gap: 8px; margin-top: 6px; }
+.skeleton-btn {
+  height: 40px; border-radius: 8px;
+  background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);
+  background-size: 200% 100%; animation: skeleton-shine 1.4s ease infinite;
+}
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .bottom-nav { display: flex; }
   header nav { display: none; }
-  body { padding-bottom: 64px; }
+  body { padding-bottom: 76px; }
+
+  /* ヘッダー：登録ボタンを非表示にしスペースを確保 */
+  .header-right .btn-register { display: none; }
+  .header-search-wrap { flex: 1; max-width: none; }
+  header { padding: 0 14px; gap: 8px; }
+
+  /* カタログ */
   .catalog-layout { flex-direction: column; }
-  .sidebar { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid #d4c4a8; padding: 10px 0; max-height: 180px; overflow-y: auto; }
-  .card-grid { grid-template-columns: repeat(2, 1fr); }
+  .sidebar { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid var(--border); padding: 8px 0; max-height: 160px; overflow-y: auto; display: flex; flex-wrap: wrap; }
+  .filter-section { flex-shrink: 0; }
+  .filter-divider { display: none; }
+  .card-grid { grid-template-columns: 1fr; gap: 14px; }
+  .main-content { padding: 16px; }
+
+  /* 詳細 */
   .detail-layout { grid-template-columns: 1fr; }
-  .detail-image-col { min-height: 280px; padding: 24px; }
+  .detail-image-col { min-height: 260px; padding: 20px; }
+
+  /* AI */
   .result-cards { grid-template-columns: 1fr; }
-  .map-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #d4c4a8; max-height: 200px; }
-  .map-layout { flex-direction: column; }
   .quiz-options { grid-template-columns: 1fr; }
+  .ai-hero { padding: 36px 16px 28px; }
+  .ai-hero-title { font-size: 22px; }
+  .ai-start-btn { padding: 14px 32px; font-size: 15px; }
+
+  /* マップ */
+  .map-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); max-height: 200px; }
+  .map-layout { flex-direction: column; }
+
+  /* スキャン */
   .scan-area { flex-direction: column; }
   .scan-camera-box { width: 100%; }
+
+  /* マイページ */
+  .mypage-profile-card { grid-template-columns: 1fr; text-align: center; }
+  .mypage-avatar { margin: 0 auto; }
+  .mypage-stats, .mypage-grid { grid-template-columns: 1fr; }
+
+  /* 検索グリッド（おすすめページ）: 縦1列 */
+  .search-grid { grid-template-columns: 1fr; }
+
+  /* フォントサイズ調整 */
+  .hero-clean h1 { font-size: 22px; line-height: 1.5; }
+  .hero-clean p { font-size: 13px; }
+  .hero-clean { padding: 28px 16px; }
+  .curation-title { font-size: 19px; }
+  .sake-clean-name { font-size: 18px !important; }
+  .banner-simple h3 { font-size: 18px; }
+  .tab-title { font-size: 22px; }
+
+  /* タッチターゲット最小44px */
+  .btn-clean-detail,
+  .btn-clean-amazon,
+  .hero-cta-btn,
+  .hero-cta-outline,
+  .scan-file-btn,
+  .scan-camera-btn,
+  .tl-post-btn,
+  .map-locate-btn,
+  .quiz-retry-btn,
+  .btn-ec,
+  .auth-submit,
+  .auth-google-btn,
+  .submit-btn,
+  .mypage-save-btn,
+  .onboarding-next-btn,
+  .onboarding-start-btn { min-height: 44px; }
+
+  .bnav-btn { min-height: 52px; min-width: 44px; }
+  .bnav-btn span:first-child { font-size: 22px; }
+  .bnav-btn span:last-child { font-size: 11px; }
 }
+
 @media (max-width: 480px) {
-  .card-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .card-grid { grid-template-columns: 1fr; gap: 10px; }
+  .search-grid { grid-template-columns: 1fr; gap: 12px; }
   .tab-content { padding: 0 14px; }
+  .curation-wrap { padding: 16px 12px 44px; }
+  .hero-clean h1 { font-size: 20px; }
+  .sake-clean-name { font-size: 17px !important; }
+}
+
+/* ===== NEW TERRACOTTA TOP PAGE ===== */
+.new-top-page { font-family: 'Shippori Mincho B1', 'Shippori Mincho', serif; }
+
+/* ---- HERO FULL ---- */
+.hero-full {
+  height: 100vh; min-height: 600px;
+  background: linear-gradient(160deg, #D85A30 0%, #C44825 55%, #B84820 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; position: relative; overflow: hidden; padding: 80px 24px 120px;
+}
+.hero-full::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='45'%3E%3Ccircle cx='30' cy='45' r='28' fill='none' stroke='rgba(255,255,255,0.07)' stroke-width='1.5'/%3E%3Ccircle cx='0' cy='45' r='28' fill='none' stroke='rgba(255,255,255,0.07)' stroke-width='1.5'/%3E%3Ccircle cx='60' cy='45' r='28' fill='none' stroke='rgba(255,255,255,0.07)' stroke-width='1.5'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='45'%3E%3Ccircle cx='0' cy='22' r='28' fill='none' stroke='rgba(255,255,255,0.07)' stroke-width='1.5'/%3E%3Ccircle cx='30' cy='22' r='28' fill='none' stroke='rgba(255,255,255,0.07)' stroke-width='1.5'/%3E%3Ccircle cx='60' cy='22' r='28' fill='none' stroke='rgba(255,255,255,0.07)' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-size: 60px 45px, 60px 45px;
+  background-position: 0 0, 30px 22.5px;
+}
+.hero-full::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  height: 100px; pointer-events: none;
+  background: linear-gradient(to top, #faf6ed 0%, transparent 100%);
+}
+.hero-inner { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; }
+.hero-eyebrow-new {
+  display: inline-block; font-size: 11px; letter-spacing: 5px; text-transform: uppercase;
+  color: rgba(255,255,255,0.75); margin-bottom: 32px;
+  border: 1px solid rgba(255,255,255,0.35); padding: 7px 20px; border-radius: 30px;
+}
+.hero-title-main {
+  font-size: clamp(38px, 5.5vw, 68px); font-weight: 800; color: white;
+  line-height: 1.45; margin-bottom: 22px; letter-spacing: 0.02em;
+  font-family: 'Shippori Mincho B1', 'Shippori Mincho', serif;
+}
+.hero-title-main em {
+  font-style: normal; display: block; font-size: 0.62em;
+  letter-spacing: 0.12em; opacity: 0.88; margin: 6px 0;
+}
+.hero-subtitle-new {
+  font-size: clamp(15px, 2vw, 19px); color: rgba(255,255,255,0.85);
+  margin-bottom: 52px; letter-spacing: 0.1em;
+}
+.hero-cta-group { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+.btn-hero-primary {
+  background: white; color: #D85A30; border: none;
+  padding: 17px 44px; border-radius: 50px; font-size: 16px; font-weight: 800;
+  font-family: 'Shippori Mincho B1', 'Shippori Mincho', serif;
+  cursor: pointer; letter-spacing: 0.05em;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+}
+.btn-hero-primary:hover { transform: translateY(-5px); box-shadow: 0 16px 40px rgba(0,0,0,0.22); background: #fff8f5; }
+.btn-hero-outline {
+  background: transparent; color: white; border: 2px solid rgba(255,255,255,0.65);
+  padding: 15px 38px; border-radius: 50px; font-size: 15px; font-weight: 700;
+  font-family: 'Shippori Mincho B1', 'Shippori Mincho', serif;
+  cursor: pointer; letter-spacing: 0.05em;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-hero-outline:hover { background: rgba(255,255,255,0.14); border-color: white; transform: translateY(-3px); }
+.hero-scroll-hint {
+  position: absolute; bottom: 110px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: rgba(255,255,255,0.55); font-size: 9px; letter-spacing: 3px;
+  text-transform: uppercase; z-index: 1;
+}
+.scroll-arrow {
+  width: 18px; height: 18px;
+  border-right: 2px solid rgba(255,255,255,0.45); border-bottom: 2px solid rgba(255,255,255,0.45);
+  transform: rotate(45deg); animation: scrollBounce 1.8s ease-in-out infinite;
+}
+@keyframes scrollBounce {
+  0%,100% { transform: rotate(45deg) translateY(0); opacity: 0.5; }
+  50% { transform: rotate(45deg) translateY(7px); opacity: 1; }
+}
+
+/* ---- MISSION ---- */
+.mission-section { background: #faf6ed; padding: 110px 24px; text-align: center; }
+.mission-inner { max-width: 820px; margin: 0 auto; }
+.mission-stat {
+  font-size: clamp(56px, 9vw, 104px); font-weight: 800; color: #1a1a1a;
+  line-height: 1; margin-bottom: 10px; letter-spacing: -0.04em;
+  font-family: 'Shippori Mincho B1', 'Shippori Mincho', serif;
+}
+.mission-stat-label { font-size: clamp(15px, 2vw, 19px); color: #6b7280; margin-bottom: 52px; letter-spacing: 0.05em; }
+.mission-stat-2 {
+  font-size: clamp(52px, 8vw, 96px); font-weight: 800; color: #D85A30;
+  line-height: 1; margin-bottom: 10px; letter-spacing: -0.03em;
+  font-family: 'Shippori Mincho B1', 'Shippori Mincho', serif;
+}
+.mission-tagline {
+  font-size: clamp(18px, 3vw, 28px); font-weight: 700; color: #1a1a1a;
+  line-height: 1.6; letter-spacing: 0.04em; margin-top: 16px;
+  font-family: 'Shippori Mincho B1', 'Shippori Mincho', serif;
+}
+
+/* ---- WEEKLY SECTION ---- */
+.weekly-section { background: white; padding: 88px 24px; }
+.weekly-section-inner { max-width: 1100px; margin: 0 auto; }
+.section-title-new {
+  font-size: clamp(26px, 4vw, 40px); font-weight: 800; color: #1a1a1a;
+  margin-bottom: 48px; letter-spacing: -0.01em; position: relative; display: inline-block;
+  font-family: 'Shippori Mincho B1', 'Shippori Mincho', serif;
+}
+.section-title-new::after {
+  content: ''; position: absolute; bottom: -10px; left: 0; right: 0;
+  height: 5px; background: #D85A30; border-radius: 3px;
+}
+.weekly-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin-bottom: 0; }
+.sake-clean-card {
+  background: white; border: 1px solid var(--border); border-radius: 14px;
+  overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer;
+}
+.sake-clean-card:hover { transform: translateY(-8px); box-shadow: 0 22px 52px rgba(216,90,48,0.18); }
+.sake-ribbon {
+  background: #D85A30; color: white; font-size: 10px; font-weight: 700;
+  padding: 6px 14px; letter-spacing: 1.5px; display: block; text-align: center;
+  text-transform: uppercase;
+}
+.sake-media {
+  aspect-ratio: 3/4; background: #faf6ed; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;
+}
+.sake-media img { width: 100%; height: 100%; object-fit: cover; }
+.bottle-ph { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #c0b0a8; }
+.bottle-ph svg { width: 46px; height: 46px; }
+.bottle-ph span { font-size: 10px; letter-spacing: 1.4px; }
+.sake-clean-body { padding: 16px; }
+.sake-clean-name { font-size: 20px; line-height: 1.45; margin-bottom: 5px; font-family: 'Shippori Mincho B1', serif; }
+.sake-clean-kura { font-size: 12px; color: #7c8086; margin-bottom: 10px; }
+.region-chip {
+  display: inline-block; font-size: 11px; border: 1px solid #e8d0c8;
+  color: #B84820; border-radius: 999px; padding: 3px 10px; margin-bottom: 14px;
+}
+.sake-clean-actions { display: flex; gap: 8px; }
+.btn-clean-detail, .btn-clean-amazon {
+  border-radius: 8px; padding: 10px; font-family: inherit;
+  font-size: 12px; cursor: pointer; text-decoration: none; text-align: center;
+}
+.btn-clean-detail {
+  flex: 1; color: #D85A30; background: white; border: 1.5px solid #D85A30;
+  font-weight: 600; transition: background 0.2s;
+}
+.btn-clean-detail:hover { background: #fff5f0; }
+.btn-clean-amazon {
+  background: #D85A30; color: #fff; border: none; font-weight: 700;
+  white-space: nowrap; transition: background 0.2s;
+}
+.btn-clean-amazon:hover { background: #B84820; }
+
+/* ---- BANNER ---- */
+.new-banner-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 44px; }
+.new-banner {
+  border-radius: 20px; padding: 40px 32px; cursor: pointer; position: relative; overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s;
+}
+.new-banner:hover { transform: translateY(-5px); box-shadow: 0 20px 48px rgba(0,0,0,0.14); }
+.new-banner-ai { background: linear-gradient(135deg, #D85A30 0%, #B84820 100%); }
+.new-banner-map { background: linear-gradient(135deg, #0a4a36 0%, #0F6E56 100%); }
+.new-banner-deco { position: absolute; right: -10px; bottom: -20px; font-size: 100px; opacity: 0.12; line-height: 1; pointer-events: none; user-select: none; }
+.new-banner h3 { font-size: 24px; font-weight: 800; color: white; margin-bottom: 10px; font-family: 'Shippori Mincho B1', serif; }
+.new-banner p { font-size: 14px; color: rgba(255,255,255,0.76); line-height: 1.75; margin-bottom: 22px; }
+.new-banner-btn {
+  display: inline-block; background: white; padding: 10px 24px; border-radius: 30px;
+  font-size: 13px; font-weight: 700; font-family: inherit; border: none; cursor: pointer;
+  transition: opacity 0.2s;
+}
+.new-banner-btn:hover { opacity: 0.88; }
+.new-banner-ai .new-banner-btn { color: #D85A30; }
+.new-banner-map .new-banner-btn { color: #0F6E56; }
+
+/* ---- HOW TO USE ---- */
+.howto-section {
+  background: linear-gradient(160deg, #D85A30 0%, #B84820 100%);
+  padding: 110px 24px; position: relative; overflow: hidden;
+}
+.howto-section::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='45'%3E%3Ccircle cx='30' cy='45' r='28' fill='none' stroke='rgba(255,255,255,0.05)' stroke-width='1.5'/%3E%3Ccircle cx='0' cy='45' r='28' fill='none' stroke='rgba(255,255,255,0.05)' stroke-width='1.5'/%3E%3Ccircle cx='60' cy='45' r='28' fill='none' stroke='rgba(255,255,255,0.05)' stroke-width='1.5'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='45'%3E%3Ccircle cx='0' cy='22' r='28' fill='none' stroke='rgba(255,255,255,0.05)' stroke-width='1.5'/%3E%3Ccircle cx='30' cy='22' r='28' fill='none' stroke='rgba(255,255,255,0.05)' stroke-width='1.5'/%3E%3Ccircle cx='60' cy='22' r='28' fill='none' stroke='rgba(255,255,255,0.05)' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-size: 60px 45px, 60px 45px;
+  background-position: 0 0, 30px 22.5px;
+}
+.howto-inner { max-width: 1000px; margin: 0 auto; position: relative; z-index: 1; }
+.howto-title {
+  font-size: clamp(28px, 4vw, 44px); font-weight: 800; color: white;
+  text-align: center; margin-bottom: 72px; letter-spacing: 0.04em;
+  font-family: 'Shippori Mincho B1', 'Shippori Mincho', serif;
+}
+.howto-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; }
+.howto-step { text-align: center; color: white; }
+.howto-step-num { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 16px; }
+.howto-step-icon { font-size: 56px; margin-bottom: 18px; display: block; }
+.howto-step-title { font-size: 24px; font-weight: 700; margin-bottom: 12px; color: white; font-family: 'Shippori Mincho B1', serif; }
+.howto-step-desc { font-size: 14px; color: rgba(255,255,255,0.78); line-height: 1.85; }
+
+/* ---- BREWERY VOICES ---- */
+.voices-section { background: white; padding: 100px 24px; }
+.voices-inner { max-width: 860px; margin: 0 auto; }
+.voices-quote {
+  font-size: 110px; line-height: 0.7; color: #D85A30; font-weight: 800;
+  letter-spacing: -0.05em; opacity: 0.22; display: block; margin-bottom: 12px;
+}
+.voices-text {
+  font-size: clamp(18px, 2.8vw, 26px); font-weight: 700; color: #1a1a1a;
+  line-height: 1.85; margin-bottom: 28px; letter-spacing: 0.03em;
+  font-family: 'Shippori Mincho B1', 'Shippori Mincho', serif;
+}
+.voices-author { font-size: 13px; color: #6b7280; letter-spacing: 0.05em; }
+.voices-author strong { color: #1a1a1a; display: block; font-size: 15px; margin-bottom: 3px; }
+
+/* ---- SEARCH SECTION ---- */
+.search-section { background: #faf6ed; padding: 88px 24px; }
+.search-section-inner { max-width: 1100px; margin: 0 auto; }
+.search-result-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 28px; }
+.search-result-count { color: var(--text-muted); font-size: 13px; }
+.search-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
+
+/* ---- FOOTER ---- */
+.site-footer { background: #B84820; color: white; padding: 72px 24px 44px; }
+.footer-inner { max-width: 1100px; margin: 0 auto; }
+.footer-logo { font-size: 26px; font-weight: 800; color: white; margin-bottom: 14px; letter-spacing: -0.01em; font-family: 'Shippori Mincho B1', serif; }
+.footer-mission { font-size: 14px; color: rgba(255,255,255,0.72); line-height: 1.9; max-width: 440px; margin-bottom: 44px; }
+.footer-divider { height: 1px; background: rgba(255,255,255,0.18); margin-bottom: 28px; }
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.footer-copy { font-size: 12px; color: rgba(255,255,255,0.48); }
+.footer-links { display: flex; gap: 22px; }
+.footer-links a { font-size: 12px; color: rgba(255,255,255,0.62); text-decoration: none; transition: color 0.2s; }
+.footer-links a:hover { color: white; }
+
+/* ---- FADE-IN ANIMATIONS ---- */
+.fade-in { opacity: 0; transform: translateY(30px); transition: opacity 0.75s ease, transform 0.75s ease; }
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+.fade-in-delay-1 { transition-delay: 0.12s; }
+.fade-in-delay-2 { transition-delay: 0.24s; }
+.fade-in-delay-3 { transition-delay: 0.36s; }
+
+/* ---- MISC ---- */
+.loading-inline { display: inline-flex; align-items: center; gap: 8px; color: var(--text-muted); }
+.app-loading {
+  position: fixed; inset: 0; background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; z-index: 999;
+}
+.app-loading.hidden { display: none; }
+.app-loading-inner {
+  border: 1px solid var(--border); background: white; border-radius: 14px;
+  padding: 14px 18px; display: inline-flex; align-items: center; gap: 10px;
+  color: var(--text-muted); font-size: 13px;
+}
+
+/* natural overrides */
+#page-ai { background: #fafaf8; }
+.quiz-option:hover { border-color: var(--accent); box-shadow: 0 6px 16px rgba(29,158,117,0.14); }
+
+@media (max-width: 920px) {
+  .weekly-grid { grid-template-columns: 1fr 1fr; }
+  .new-banner-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .hero-full { padding: 80px 20px 120px; min-height: 100svh; }
+  .hero-title-main { font-size: 36px; }
+  .mission-section { padding: 80px 20px; }
+  .weekly-section { padding: 64px 20px; }
+  .howto-section { padding: 80px 20px; }
+  .howto-steps { grid-template-columns: 1fr; gap: 44px; }
+  .voices-section { padding: 80px 20px; }
+  .search-section { padding: 64px 20px; }
+  .site-footer { padding: 56px 20px 36px; }
+  .new-banner-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo" onclick="showTab('catalog')"><span>酒</span>SakeFind</div>
+  <div class="logo" onclick="showTab('recommend')"><span>酒</span>SakeFind</div>
   <nav>
-    <button class="tab-btn active" data-tab="catalog" onclick="showTab('catalog')">検索</button>
+    <button class="tab-btn active" data-tab="recommend" onclick="showTab('recommend')">おすすめ</button>
     <button class="tab-btn" data-tab="ai" onclick="showTab('ai')">AI診断</button>
     <button class="tab-btn" data-tab="map" onclick="showTab('map')">マップ</button>
     <button class="tab-btn" data-tab="scan" onclick="showTab('scan')">スキャン</button>
     <button class="tab-btn" data-tab="timeline" onclick="showTab('timeline')">タイムライン</button>
+    <button class="tab-btn" data-tab="mypage" onclick="showTab('mypage')">マイページ</button>
   </nav>
   <div class="header-search-wrap">
     <input type="text" class="search-bar" placeholder="銘柄・蔵元・産地を検索…" id="searchInput" oninput="onSearchInput()">
   </div>
   <div class="header-right">
-    <button class="btn-login" onclick="showUserMenu()">ログイン</button>
-    <button class="btn-register" onclick="showUserMenu()">会員登録</button>
+    <button id="headerLoginBtn" class="btn-login" onclick="openAuthModal('login')">ログイン</button>
+    <button id="headerRegisterBtn" class="btn-register" onclick="openAuthModal('signup')">会員登録</button>
+    <div class="user-menu">
+      <button id="userMenuTrigger" class="user-menu-trigger" onclick="toggleUserDropdown(event)">
+        <span id="userMenuAvatar" class="user-menu-avatar">🍶</span>
+        <span id="userMenuName" class="user-menu-name">ゲスト</span>
+      </button>
+      <div id="userDropdown" class="user-dropdown">
+        <button class="user-dd-btn" onclick="showTab('mypage');closeUserDropdown()">マイページ</button>
+        <button class="user-dd-btn" onclick="showTab('mypage');closeUserDropdown()">設定</button>
+        <button class="user-dd-btn" onclick="logoutUser()">ログアウト</button>
+      </div>
+    </div>
   </div>
 </header>
+<div id="appLoading" class="app-loading">
+  <div class="app-loading-inner"><span class="loading-spinner"></span><span>銘柄データを読み込み中…</span></div>
+</div>
 
-<!-- ===== CATALOG ===== -->
-<div id="page-catalog" class="page active">
-  <div class="catalog-layout">
-    <aside class="sidebar">
-      <div class="filter-section">
-        <div class="filter-title">種類</div>
-        <div id="filterTypeSection">
-          <div class="filter-item active" onclick="setFilter(this,'type','all')"><span>すべて</span><span class="filter-count">-</span></div>
+<!-- ===== RECOMMEND ===== -->
+<div id="page-recommend" class="page active">
+  <div class="new-top-page">
+
+    <!-- HERO -->
+    <section class="hero-full">
+      <div class="hero-inner">
+        <span class="hero-eyebrow-new fade-in">Sake Find</span>
+        <h1 class="hero-title-main fade-in fade-in-delay-1">
+          まだ知られていない、
+          <em>本物の日本酒を</em>
+          あなたへ。
+        </h1>
+        <p class="hero-subtitle-new fade-in fade-in-delay-2">全国の小さな酒蔵を、紡ぐ。</p>
+        <div class="hero-cta-group fade-in fade-in-delay-3">
+          <button class="btn-hero-primary" onclick="showTab('ai')">AI診断ではじめる</button>
+          <button class="btn-hero-outline" onclick="showTab('map')">酒蔵を見る</button>
         </div>
       </div>
-      <div class="filter-divider"></div>
-      <div class="filter-section">
-        <div class="filter-title">産地</div>
-        <div id="filterRegionSection"><div style="padding:8px 14px;font-size:12px;color:#b0a090">読み込み中…</div></div>
+      <div class="hero-scroll-hint">
+        <span>SCROLL</span>
+        <div class="scroll-arrow"></div>
       </div>
-      <div class="filter-divider"></div>
-      <div class="filter-section">
-        <div class="filter-title">味わい</div>
-        <div id="filterTasteSection"><div style="padding:8px 14px;font-size:12px;color:#b0a090">読み込み中…</div></div>
+    </section>
+
+    <!-- MISSION -->
+    <section class="mission-section">
+      <div class="mission-inner">
+        <div class="mission-stat fade-in" id="missionStat1">1,400</div>
+        <div class="mission-stat-label fade-in">以上の酒蔵が、日本にあります。</div>
+        <div class="mission-stat-2 fade-in">約半数</div>
+        <div class="mission-stat-label fade-in">廃業の危機にある蔵が、全国に。</div>
+        <div class="mission-tagline fade-in">SakeFindは、その一つひとつを残したい。</div>
       </div>
-    </aside>
-    <main class="main-content">
-      <div class="main-toolbar">
-        <div class="result-count"><strong id="countDisplay">-</strong> 件</div>
-        <select class="sort-select" id="sortSelect" onchange="renderCards()">
-          <option value="default">おすすめ順</option>
-          <option value="name">名前順</option>
-        </select>
+    </section>
+
+    <!-- WEEKLY SAKE -->
+    <section class="weekly-section">
+      <div class="weekly-section-inner">
+        <h2 class="section-title-new fade-in">今週のおすすめ</h2>
+        <p style="color:#6b7280;font-size:14px;margin-bottom:36px;margin-top:24px" class="fade-in">キュレーターが選んだ3銘柄</p>
+        <div id="weeklyGrid" class="weekly-grid">
+          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:90px"></div></div></div></div>
+          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:90px"></div></div></div></div>
+          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:90px"></div></div></div></div>
+        </div>
+        <div class="new-banner-grid">
+          <div class="new-banner new-banner-ai fade-in" onclick="showTab('ai')">
+            <div class="new-banner-deco">🍶</div>
+            <h3>AI診断で探す</h3>
+            <p>5つの質問で、あなたの味覚プロファイルを解析。ぴったりの一本を提案します。</p>
+            <button class="new-banner-btn">AI診断へ →</button>
+          </div>
+          <div class="new-banner new-banner-map fade-in fade-in-delay-1" onclick="showTab('map')">
+            <div class="new-banner-deco">🗾</div>
+            <h3>地域から探す</h3>
+            <p>都道府県や地図から、全国の酒蔵と取り扱い店をチェック。</p>
+            <button class="new-banner-btn">マップへ →</button>
+          </div>
+        </div>
       </div>
-      <div class="card-grid" id="cardGrid">
-        <div style="grid-column:1/-1;padding:40px;text-align:center;color:#8a7a6a">読み込み中…</div>
+    </section>
+
+    <!-- HOW TO USE -->
+    <section class="howto-section">
+      <div class="howto-inner">
+        <h2 class="howto-title fade-in">SakeFindの使い方</h2>
+        <div class="howto-steps">
+          <div class="howto-step fade-in">
+            <div class="howto-step-num">STEP 01</div>
+            <span class="howto-step-icon">🎯</span>
+            <div class="howto-step-title">診断する</div>
+            <div class="howto-step-desc">AIが5つの質問で<br>あなたの味覚を分析</div>
+          </div>
+          <div class="howto-step fade-in fade-in-delay-1">
+            <div class="howto-step-num">STEP 02</div>
+            <span class="howto-step-icon">🔍</span>
+            <div class="howto-step-title">見つける</div>
+            <div class="howto-step-desc">全国の小さな酒蔵から<br>理想の一本を発見</div>
+          </div>
+          <div class="howto-step fade-in fade-in-delay-2">
+            <div class="howto-step-num">STEP 03</div>
+            <span class="howto-step-icon">❤️</span>
+            <div class="howto-step-title">応援する</div>
+            <div class="howto-step-desc">購入して、蔵元の<br>想いを未来へつなぐ</div>
+          </div>
+        </div>
       </div>
-    </main>
+    </section>
+
+    <!-- ALL SAKES -->
+    <section class="search-section">
+      <div class="search-section-inner">
+        <div class="search-result-header">
+          <h2 class="section-title-new fade-in" style="font-size:clamp(22px,3vw,32px);margin-bottom:0">おすすめ銘柄</h2>
+          <div class="search-result-count"><span id="countDisplay">-</span> 件</div>
+        </div>
+        <div id="cardGrid" class="search-grid">
+          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
+          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
+          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
+          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
+          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
+          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-logo">🍶 SakeFind</div>
+        <div class="footer-mission">
+          本物の日本酒を愛する人と、小さな酒蔵を紡ぐ。<br>
+          技術で、文化を次の世代へ。
+        </div>
+        <div class="footer-divider"></div>
+        <div class="footer-bottom">
+          <div class="footer-copy">© 2025 SakeFind. All rights reserved.</div>
+          <div class="footer-links">
+            <a href="#">プライバシーポリシー</a>
+            <a href="#">利用規約</a>
+            <a href="#">お問い合わせ</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
   </div>
 </div>
 
@@ -591,7 +1594,7 @@ canvas#scanCanvas { display: none; }
       </div>
       <div class="detail-price" id="detailPrice"></div>
       <div class="detail-actions">
-        <button class="btn-ec" id="detailEcBtn">ECサイトで購入する →</button>
+        <button class="btn-ec" id="detailEcBtn">Amazonで購入する →</button>
         <button class="btn-fav" id="detailFavBtn" onclick="toggleDetailFav()">♡</button>
       </div>
     </div>
@@ -600,32 +1603,77 @@ canvas#scanCanvas { display: none; }
 
 <!-- ===== AI診断 ===== -->
 <div id="page-ai" class="page">
-  <div class="tab-content" style="max-width:860px">
-    <div class="tab-title">AI 味覚診断</div>
-    <div class="tab-subtitle">5つの質問に答えるだけで、あなたの味覚にマッチする小規模蔵元の銘柄を3本ご提案します。</div>
-    <div class="ai-small-badge">対象：年間200石以下の小規模蔵元銘柄のみ</div>
-    <button class="ai-start-btn" id="aiStartBtn" onclick="startQuiz()">診断をはじめる →</button>
+  <div class="ai-page-wrap">
+
+    <!-- HERO -->
+    <div class="ai-hero" id="aiHero">
+      <div class="ai-hero-deco">酒</div>
+      <span class="ai-hero-icon">🍶</span>
+      <span class="ai-hero-title-en">Sake Taste Diagnosis</span>
+      <div class="ai-hero-title">あなたにぴったりの<br>日本酒を見つけよう</div>
+      <div class="ai-hero-meta">
+        <span>5つの質問</span>
+        <span class="ai-hero-meta-sep">·</span>
+        <span>所要時間 約1分</span>
+        <span class="ai-hero-meta-sep">·</span>
+        <span>無料</span>
+      </div>
+      <div class="ai-hero-features">
+        <span class="ai-feat-chip">🌾 旨味</span>
+        <span class="ai-feat-chip">🍋 酸味</span>
+        <span class="ai-feat-chip">🍯 甘さ</span>
+        <span class="ai-feat-chip">🌿 苦味</span>
+        <span class="ai-feat-chip">💎 濃醇</span>
+      </div>
+      <button class="ai-start-btn" id="aiStartBtn" onclick="startQuiz()">
+        診断をはじめる
+        <span class="ai-start-arrow">→</span>
+      </button>
+      <div class="ai-hero-note">✦ 味覚プロファイル解析 ✦</div>
+    </div>
+
+    <!-- QUIZ -->
     <div class="ai-quiz" id="aiQuiz">
-      <div class="quiz-steps-indicator" id="quizDots"></div>
-      <div class="quiz-step" id="quizStep">
-        <div class="quiz-progress" id="quizProgress"></div>
+
+      <!-- Progress bar -->
+      <div class="quiz-progress-wrap">
+        <div class="quiz-progress-top">
+          <span class="quiz-progress-label">PROGRESS</span>
+          <span class="quiz-progress-frac" id="quizProgressFrac">1 / 5</span>
+        </div>
+        <div class="quiz-progress-track">
+          <div class="quiz-progress-fill" id="quizProgressFill" style="width:20%"></div>
+        </div>
+      </div>
+
+      <!-- Question card -->
+      <div class="quiz-card" id="quizStep">
+        <span class="quiz-q-label" id="quizQLabel">QUESTION 1</span>
         <div class="quiz-q" id="quizQuestion"></div>
         <div class="quiz-options" id="quizOptions"></div>
       </div>
+
+      <!-- Analyzing -->
       <div class="quiz-analyzing" id="quizAnalyzing">
-        <div class="analyzing-spinner"></div>
-        <div style="font-size:15px;font-weight:bold;color:#1a0a00;margin-bottom:5px">味覚プロファイルを解析中…</div>
-        <div style="font-size:12px;color:#8a7a6a">あなたの好みにぴったりの銘柄を探しています</div>
+        <span class="analyzing-sake">🍶</span>
+        <div class="analyzing-title">味覚プロファイルを解析中<span class="analyzing-dots"><span>.</span><span>.</span><span>.</span></span></div>
+        <div class="analyzing-sub">あなたの好みにぴったりの銘柄を探しています</div>
       </div>
+
+      <!-- Result -->
       <div class="quiz-result" id="quizResult">
-        <div class="quiz-result-title">あなたにおすすめの3銘柄</div>
-        <div class="quiz-result-sub" id="quizResultSub"></div>
+        <div class="result-header">
+          <span class="result-header-icon">🎯</span>
+          <div class="quiz-result-title">あなたにおすすめの3銘柄</div>
+          <div class="quiz-result-sub" id="quizResultSub"></div>
+        </div>
         <div class="result-cards" id="resultCards"></div>
         <div style="text-align:center">
           <button class="quiz-retry-btn" onclick="retryQuiz()">もう一度診断する</button>
         </div>
       </div>
-    </div>
+
+    </div><!-- /ai-quiz -->
   </div>
 </div>
 
@@ -633,22 +1681,48 @@ canvas#scanCanvas { display: none; }
 <div id="page-map" class="page">
   <div class="map-layout">
     <div class="map-sidebar">
-      <div class="map-filter-tabs">
-        <button class="map-filter-tab active" data-mtype="all" onclick="setMapFilter(this,'all')">全て</button>
-        <button class="map-filter-tab" data-mtype="brewery" onclick="setMapFilter(this,'brewery')">🏭酒蔵</button>
-        <button class="map-filter-tab" data-mtype="shop" onclick="setMapFilter(this,'shop')">🛒酒屋</button>
-        <button class="map-filter-tab" data-mtype="restaurant" onclick="setMapFilter(this,'restaurant')">🍴飲食店</button>
+
+      <!-- 検索エリア -->
+      <div class="map-search-area">
+        <div class="map-search-row">
+          <span class="map-search-icon">🔍</span>
+          <input class="map-search-input" id="mapSearchInput"
+            placeholder="酒蔵・酒屋・飲食店名を検索…"
+            oninput="onMapSearch(this.value)">
+          <button class="map-search-clear" id="mapSearchClear" onclick="clearMapSearch()">✕</button>
+        </div>
+        <select class="map-pref-select" id="mapPrefSelect" onchange="onMapPrefChange(this.value)">
+          <option value="">都道府県を選択…</option>
+        </select>
+        <div style="padding-bottom:2px"></div>
       </div>
+
+      <!-- 種別タブ -->
+      <div class="map-type-tabs">
+        <button class="map-type-tab active"         data-mtype="all"        onclick="setMapFilter(this,'all')">すべて</button>
+        <button class="map-type-tab tab-brewery"    data-mtype="brewery"    onclick="setMapFilter(this,'brewery')">🏭 酒蔵</button>
+        <button class="map-type-tab tab-shop"       data-mtype="shop"       onclick="setMapFilter(this,'shop')">🛒 酒屋</button>
+        <button class="map-type-tab tab-restaurant" data-mtype="restaurant" onclick="setMapFilter(this,'restaurant')">🍴 飲食店</button>
+      </div>
+
+      <!-- 件数バー -->
+      <div class="map-result-bar">
+        <div class="map-result-count"><strong id="mapResultCount">-</strong> 件</div>
+        <button class="map-reset-btn" onclick="resetMapFilters()">条件リセット</button>
+      </div>
+
+      <!-- リスト -->
       <div class="map-list-wrap" id="mapList">
-        <div style="padding:20px;text-align:center;color:#8a7a6a;font-size:13px">読み込み中…</div>
+        <div style="padding:20px;text-align:center;color:#6b7280;font-size:13px">読み込み中…</div>
       </div>
     </div>
+
     <div class="map-main">
       <div id="mapCanvas"></div>
       <div id="mapNoKey" class="map-nokey">
         <div class="map-nokey-icon">🗺</div>
         <div class="map-nokey-title">マップを表示するには API キーが必要です</div>
-        <div class="map-nokey-sub">index.html 上部の <code>GOOGLE_MAPS_API_KEY</code> に<br>Google Maps JavaScript API キーを入力してください。<br>マップなしでも下の店舗リストは利用できます。</div>
+        <div class="map-nokey-sub">config.js の <code>GOOGLE_MAPS_API_KEY</code> にキーを入力してください。<br>マップなしでも左の店舗リストは利用できます。</div>
         <button class="map-locate-btn" onclick="loadMapLocations()">店舗リストを読み込む</button>
       </div>
     </div>
@@ -663,7 +1737,7 @@ canvas#scanCanvas { display: none; }
       <div class="tab-subtitle">日本酒のラベルを撮影・アップロードして銘柄を自動認識します。</div>
     </div>
     <div id="scanNoKey" class="scan-nokey" style="display:none">
-      ⚠️ Anthropic API キーが設定されていません。index.html の <code>ANTHROPIC_API_KEY</code> に入力してください。
+      ⚠️ OpenAI API キーが設定されていません。config.js の <code>OPENAI_API_KEY</code> に入力してください。
     </div>
     <div class="scan-area">
       <div class="scan-drop-zone" onclick="document.getElementById('fileInput').click()">
@@ -675,7 +1749,7 @@ canvas#scanCanvas { display: none; }
       </div>
       <div class="scan-camera-box">
         <div class="scan-camera-icon">📷</div>
-        <div style="font-size:13px;font-weight:bold;color:#1a0a00">カメラで撮影</div>
+        <div style="font-size:13px;font-weight:bold;color:#1a1a1a">カメラで撮影</div>
         <button class="scan-camera-btn" onclick="openCamera()">カメラを起動</button>
       </div>
     </div>
@@ -686,27 +1760,59 @@ canvas#scanCanvas { display: none; }
     <canvas id="scanCanvas"></canvas>
     <div class="scan-loading" id="scanLoading">
       <div class="analyzing-spinner" style="margin:0 auto 12px"></div>
-      <div style="font-size:14px;font-weight:bold;color:#1a0a00">ラベルを解析中…</div>
-      <div style="font-size:12px;color:#8a7a6a;margin-top:4px">AI が銘柄を認識しています</div>
+      <div style="font-size:14px;font-weight:bold;color:#1a1a1a">解析中…</div>
+      <div class="scan-step-msg" id="scanStepMsg">ラベルを認識しています</div>
     </div>
     <div class="scan-result-card" id="scanResultCard">
       <img id="scanResultImg" class="scan-result-img" src="" alt="">
       <div class="scan-result-info">
-        <div class="scan-recognized">✓ 銘柄を認識しました</div>
+        <div class="scan-recognized" id="scanRecognizedLabel">✓ 銘柄を認識しました</div>
         <div class="scan-sake-name" id="scanSakeName"></div>
         <div class="scan-sake-brewery" id="scanSakeBrewery"></div>
-        <div class="scan-pairing">
+        <div id="scanStoryWrap" style="display:none">
+          <div class="scan-section-label">蔵元ストーリー</div>
+          <div class="scan-story-text" id="scanStoryText"></div>
+        </div>
+        <div id="scanTasteWrap" style="display:none">
+          <div class="scan-section-label">味わいプロフィール</div>
+          <div class="scan-taste-bars" id="scanTasteBars"></div>
+        </div>
+        <div id="scanPriceWrap" style="display:none">
+          <span class="scan-price-tag" id="scanPriceText"></span>
+        </div>
+        <div class="scan-pairing" id="scanPairingWrap">
           <div class="scan-pairing-title">ペアリング提案</div>
           <div class="scan-pairing-chips" id="scanPairingChips"></div>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn-buy-result" id="scanDetailBtn" style="flex:1">詳しく見る →</button>
-          <a class="btn-buy-result" id="scanEcLink" target="_blank" rel="noopener" style="flex:1;display:flex;align-items:center;justify-content:center;text-decoration:none">購入 ↗</a>
+          <a class="btn-buy-result" id="scanEcLink" target="_blank" rel="noopener" style="flex:1;display:flex;align-items:center;justify-content:center;text-decoration:none">購入する ↗</a>
         </div>
+        <button class="scan-record-btn" id="scanRecordBtn" onclick="recordScannedSake()" style="display:none">
+          🍶 飲んだ記録に残す
+        </button>
       </div>
     </div>
     <div class="scan-not-found" id="scanNotFound">
-      登録されていない銘柄です。別のラベルをお試しください。
+      銘柄を認識できませんでした。別の角度で撮り直してみてください。
+    </div>
+
+    <!-- メニュー解析 -->
+    <div class="scan-menu-section">
+      <div class="scan-menu-title">📋 メニュー解析</div>
+      <div class="scan-menu-sub">居酒屋・レストランのメニュー写真から、あなたへのおすすめを表示します</div>
+      <div class="scan-menu-drop" onclick="document.getElementById('menuFileInput').click()">
+        <div style="font-size:36px;margin-bottom:8px">🍱</div>
+        <div style="font-size:14px;font-weight:bold;color:#1a1a1a;margin-bottom:4px">メニュー写真をアップロード</div>
+        <div style="font-size:12px;color:#6b7280">メニュー全体が写っている写真が最適です</div>
+        <input type="file" id="menuFileInput" accept="image/*" style="display:none" onchange="handleMenuScan(this)">
+      </div>
+      <div class="scan-menu-loading" id="menuLoading">
+        <div class="analyzing-spinner" style="margin:0 auto 10px"></div>
+        <div style="font-size:13px;font-weight:bold;color:#1a1a1a">メニューを解析中…</div>
+        <div class="scan-step-msg" id="menuStepMsg">日本酒を認識しています</div>
+      </div>
+      <div class="scan-menu-results" id="menuResults"></div>
     </div>
   </div>
 </div>
@@ -724,6 +1830,106 @@ canvas#scanCanvas { display: none; }
     <div id="timelinePosts" class="timeline-posts">
       <div class="tl-loading">読み込み中…</div>
     </div>
+  </div>
+</div>
+
+<!-- ===== MY PAGE ===== -->
+<div id="page-mypage" class="page">
+  <div class="mypage-wrap">
+    <section class="mypage-profile-card">
+      <div class="mypage-avatar" id="myAvatarPreview">🍶</div>
+      <div>
+        <div class="mypage-name" id="myNameView">ゲスト</div>
+        <div class="mypage-bio" id="myBioView">日本酒の記録をゆるく楽しんでいます。</div>
+        <div class="mypage-edit-row">
+          <input class="mypage-input" id="myNameInput" type="text" placeholder="名前">
+          <input class="mypage-input" id="myIconInput" type="text" maxlength="2" placeholder="アイコン(例:🍶)">
+        </div>
+        <div style="margin-top:8px">
+          <textarea class="mypage-textarea" id="myBioInput" placeholder="自己紹介"></textarea>
+        </div>
+        <button class="mypage-save-btn" style="margin-top:8px" onclick="saveMyProfile()">プロフィールを保存</button>
+      </div>
+    </section>
+
+    <section class="mypage-stats">
+      <div class="mypage-stat">
+        <div class="mypage-stat-value" id="myStatDrank">0</div>
+        <div class="mypage-stat-label">飲んだ本数</div>
+      </div>
+      <div class="mypage-stat">
+        <div class="mypage-stat-value" id="myStatFav">0</div>
+        <div class="mypage-stat-label">お気に入り数</div>
+      </div>
+      <div class="mypage-stat">
+        <div class="mypage-stat-value" id="myStatPost">0</div>
+        <div class="mypage-stat-label">投稿数</div>
+      </div>
+    </section>
+
+    <section class="mypage-grid">
+      <div class="mypage-block">
+        <h3>飲んだ記録</h3>
+        <div class="mypage-list" id="myPostsList"></div>
+      </div>
+      <div class="mypage-block">
+        <h3>お気に入り銘柄</h3>
+        <div class="mypage-list" id="myFavList"></div>
+      </div>
+      <div class="mypage-block">
+        <h3>AI診断の履歴</h3>
+        <div class="mypage-list" id="myAiHistoryList"></div>
+      </div>
+      <div class="mypage-block">
+        <h3>設定</h3>
+        <div class="mypage-setting-row">
+          <span>通知を受け取る</span>
+          <input id="myNotifyToggle" type="checkbox" onchange="saveMySettings()">
+        </div>
+        <div class="mypage-setting-row">
+          <span>プロフィールを公開</span>
+          <input id="myProfilePublicToggle" type="checkbox" onchange="saveMySettings()">
+        </div>
+        <div class="mypage-setting-row">
+          <span>投稿の初期公開設定</span>
+          <input id="myPostPublicToggle" type="checkbox" onchange="saveMySettings()">
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ===== AUTH MODAL ===== -->
+<div class="modal-overlay" id="authModal" onclick="if(event.target===this)closeAuthModal()">
+  <div class="auth-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div id="authTitle" class="auth-title">ログイン</div>
+      <button class="modal-close" onclick="closeAuthModal()">✕</button>
+    </div>
+
+    <div id="authLoginView">
+      <button class="auth-google-btn" onclick="loginWithGoogle()">Googleでログイン</button>
+      <div class="auth-sep">または</div>
+      <label class="auth-label">メールアドレス</label>
+      <input id="authLoginEmail" class="auth-input" type="email" placeholder="you@example.com">
+      <label class="auth-label">パスワード</label>
+      <input id="authLoginPassword" class="auth-input" type="password" placeholder="••••••••">
+      <button class="auth-submit" onclick="loginWithEmail()">ログイン</button>
+      <button class="auth-link" onclick="switchAuthView('signup')">新規登録はこちら</button>
+    </div>
+
+    <div id="authSignupView" style="display:none">
+      <label class="auth-label">名前</label>
+      <input id="authSignupName" class="auth-input" type="text" placeholder="表示名">
+      <label class="auth-label">メールアドレス</label>
+      <input id="authSignupEmail" class="auth-input" type="email" placeholder="you@example.com">
+      <label class="auth-label">パスワード（8文字以上）</label>
+      <input id="authSignupPassword" class="auth-input" type="password" placeholder="8文字以上">
+      <button class="auth-submit" onclick="signupWithEmail()">登録する</button>
+      <button class="auth-link" onclick="switchAuthView('login')">ログインはこちら</button>
+    </div>
+
+    <div id="authMessage" class="auth-msg"></div>
   </div>
 </div>
 
@@ -786,10 +1992,23 @@ canvas#scanCanvas { display: none; }
   </div>
 </div>
 
+<!-- ===== ONBOARDING ===== -->
+<div class="onboarding-overlay" id="onboardingOverlay">
+  <div class="onboarding-modal">
+    <div class="onboarding-dots" id="onboardingDots">
+      <div class="onboarding-dot active"></div>
+      <div class="onboarding-dot"></div>
+      <div class="onboarding-dot"></div>
+    </div>
+    <div id="onboardingContent"></div>
+    <div class="onboarding-actions" id="onboardingActions"></div>
+  </div>
+</div>
+
 <!-- ===== BOTTOM NAV ===== -->
 <div class="bottom-nav">
-  <button class="bnav-btn active" data-tab="catalog" onclick="showTab('catalog')">
-    <span>🔍</span><span>検索</span>
+  <button class="bnav-btn active" data-tab="recommend" onclick="showTab('recommend')">
+    <span>⭐</span><span>おすすめ</span>
   </button>
   <button class="bnav-btn" data-tab="ai" onclick="showTab('ai')">
     <span>✨</span><span>AI診断</span>
@@ -803,26 +2022,163 @@ canvas#scanCanvas { display: none; }
   <button class="bnav-btn" data-tab="timeline" onclick="showTab('timeline')">
     <span>📱</span><span>タイムライン</span>
   </button>
+  <button class="bnav-btn" data-tab="mypage" onclick="showTab('mypage')">
+    <span>👤</span><span>マイページ</span>
+  </button>
 </div>
 
 <script>
 // ──────────────────────────────────────────────────────
 // USER SESSION
 // ──────────────────────────────────────────────────────
-let currentUserId = localStorage.getItem('sf_uid');
-if (!currentUserId) {
-  currentUserId = 'u_' + Math.random().toString(36).slice(2, 11);
-  localStorage.setItem('sf_uid', currentUserId);
-}
+const guestId = localStorage.getItem('sf_uid') || ('u_' + Math.random().toString(36).slice(2, 11));
+localStorage.setItem('sf_uid', guestId);
+
+let authUser = null;
+let isAuthenticated = false;
+let currentUserId = guestId;
 let currentUserName = localStorage.getItem('sf_uname') || 'ゲスト';
+let currentUserIcon = localStorage.getItem('sf_uicon') || '🍶';
+let currentUserBio  = localStorage.getItem('sf_ubio')  || '日本酒の記録をゆるく楽しんでいます。';
+
+function openAuthModal(mode = 'login') {
+  switchAuthView(mode);
+  setAuthMessage('');
+  document.getElementById('authModal').classList.add('active');
+}
+function closeAuthModal() {
+  document.getElementById('authModal').classList.remove('active');
+  setAuthMessage('');
+}
+function switchAuthView(mode) {
+  const login = mode !== 'signup';
+  document.getElementById('authTitle').textContent = login ? 'ログイン' : '新規登録';
+  document.getElementById('authLoginView').style.display = login ? 'block' : 'none';
+  document.getElementById('authSignupView').style.display = login ? 'none' : 'block';
+}
+function setAuthMessage(msg, isError = true) {
+  const el = document.getElementById('authMessage');
+  el.textContent = msg || '';
+  el.style.color = isError ? '#c04040' : '#2d5a27';
+}
+
+async function loginWithGoogle() {
+  setAuthMessage('');
+  const redirectTo = window.location.origin + window.location.pathname;
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo }
+  });
+  if (error) setAuthMessage(error.message);
+}
+
+async function loginWithEmail() {
+  setAuthMessage('');
+  const email = document.getElementById('authLoginEmail').value.trim();
+  const password = document.getElementById('authLoginPassword').value;
+  if (!email || !password) { setAuthMessage('メールアドレスとパスワードを入力してください'); return; }
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) { setAuthMessage(error.message); return; }
+  closeAuthModal();
+}
+
+async function signupWithEmail() {
+  setAuthMessage('');
+  const name = document.getElementById('authSignupName').value.trim();
+  const email = document.getElementById('authSignupEmail').value.trim();
+  const password = document.getElementById('authSignupPassword').value;
+  if (!name || !email || !password) { setAuthMessage('すべて入力してください'); return; }
+  if (password.length < 8) { setAuthMessage('パスワードは8文字以上にしてください'); return; }
+  const { error } = await sb.auth.signUp({
+    email, password,
+    options: { data: { name } }
+  });
+  if (error) { setAuthMessage(error.message); return; }
+  setAuthMessage('登録しました。確認メールを確認してください。', false);
+  switchAuthView('login');
+}
+
+async function logoutUser() {
+  await sb.auth.signOut();
+  closeUserDropdown();
+}
+
+function toggleUserDropdown(e) {
+  e.stopPropagation();
+  document.getElementById('userDropdown').classList.toggle('open');
+}
+function closeUserDropdown() {
+  document.getElementById('userDropdown').classList.remove('open');
+}
 
 function showUserMenu() {
-  const name = prompt('表示名を入力してください', currentUserName);
-  if (name && name.trim()) {
-    currentUserName = name.trim();
-    localStorage.setItem('sf_uname', currentUserName);
-    alert('表示名を「' + currentUserName + '」に設定しました');
+  if (isAuthenticated) showTab('mypage');
+  else openAuthModal('login');
+}
+
+function requireLogin(message = 'この機能はログインが必要です') {
+  if (isAuthenticated) return true;
+  alert(message);
+  openAuthModal('login');
+  return false;
+}
+
+function storageKey(base) {
+  return `${base}_${isAuthenticated ? currentUserId : 'guest'}`;
+}
+
+async function upsertProfile() {
+  if (!authUser) return;
+  const rawName = authUser.user_metadata?.name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'ユーザー';
+  const rawAvatar = authUser.user_metadata?.avatar_url || '';
+  currentUserName = rawName;
+  currentUserIcon = rawName.slice(0, 1);
+  const { data: existing } = await sb.from('profiles').select('*').eq('user_id', authUser.id).maybeSingle();
+  const payload = {
+    user_id: authUser.id,
+    name: existing?.name || rawName,
+    avatar_url: existing?.avatar_url || rawAvatar,
+  };
+  const { error } = await sb.from('profiles').upsert(payload, { onConflict: 'user_id' }).select().maybeSingle();
+  if (!error) {
+    currentUserName = payload.name || rawName;
+    currentUserIcon = (payload.name || rawName).slice(0, 1);
   }
+  currentUserBio = localStorage.getItem('sf_ubio') || currentUserBio;
+  localStorage.setItem('sf_uname', currentUserName);
+  localStorage.setItem('sf_uicon', currentUserIcon);
+}
+
+async function applyAuthState(user) {
+  authUser = user || null;
+  isAuthenticated = !!authUser;
+  if (isAuthenticated) {
+    currentUserId = authUser.id;
+    await upsertProfile();
+  } else {
+    currentUserId = guestId;
+    currentUserName = 'ゲスト';
+    currentUserIcon = '🍶';
+  }
+  loadUserScopedData();
+  updateUserHeaderUI();
+  renderMyPage();
+}
+
+function updateUserHeaderUI() {
+  const loginBtn = document.getElementById('headerLoginBtn');
+  const registerBtn = document.getElementById('headerRegisterBtn');
+  const trigger = document.getElementById('userMenuTrigger');
+  const avatar = document.getElementById('userMenuAvatar');
+  const name = document.getElementById('userMenuName');
+  const legacyBtn = document.getElementById('userAvatarBtn');
+  if (legacyBtn) legacyBtn.style.display = 'none';
+  if (!loginBtn || !registerBtn || !trigger || !avatar || !name) return;
+  loginBtn.style.display = isAuthenticated ? 'none' : '';
+  registerBtn.style.display = isAuthenticated ? 'none' : '';
+  trigger.classList.toggle('visible', isAuthenticated);
+  avatar.textContent = (currentUserIcon || '👤').slice(0, 2);
+  name.textContent = currentUserName || 'ユーザー';
 }
 
 // ──────────────────────────────────────────────────────
@@ -838,6 +2194,26 @@ const COLORS = [
   { c0:'#101a00', c1:'#1a2a00', tc:'#d8f0a0', ac:'#a0d040' },
   { c0:'#001818', c1:'#002828', tc:'#a0f0e8', ac:'#40c8b8' },
 ];
+
+const REGION_COLORS = {
+  '北海道':'#5a90b0',
+  '青森県':'#6a9a70','岩手県':'#6a9a70','宮城県':'#6a9a70',
+  '秋田県':'#6a9a70','山形県':'#6a9a70','福島県':'#6a9a70',
+  '茨城県':'#b08848','栃木県':'#b08848','群馬県':'#b08848',
+  '埼玉県':'#b08848','千葉県':'#b08848','東京都':'#b08848','神奈川県':'#b08848',
+  '山梨県':'#5a8858','長野県':'#5a8858','新潟県':'#5a8858',
+  '富山県':'#4a9090','石川県':'#4a9090','福井県':'#4a9090',
+  '岐阜県':'#c0882a','静岡県':'#c0882a','愛知県':'#c0882a','三重県':'#c0882a',
+  '滋賀県':'#7a60a8','京都府':'#7a60a8','大阪府':'#7a60a8',
+  '兵庫県':'#7a60a8','奈良県':'#7a60a8','和歌山県':'#7a60a8',
+  '鳥取県':'#a07050','島根県':'#a07050','岡山県':'#a07050',
+  '広島県':'#a07050','山口県':'#a07050',
+  '徳島県':'#b89030','香川県':'#b89030','愛媛県':'#b89030','高知県':'#b89030',
+  '福岡県':'#c06840','佐賀県':'#c06840','長崎県':'#c06840',
+  '熊本県':'#c06840','大分県':'#c06840','宮崎県':'#c06840',
+  '鹿児島県':'#c06840','沖縄県':'#c06840',
+};
+function getRegionColor(pref) { return REGION_COLORS[pref] || '#9ca3af'; }
 const TASTE_LABEL = { umami:'旨味', acid:'酸味', sweet:'甘み', bitter:'苦味', rich:'濃醇' };
 const TASTE_KEYS  = ['umami', 'acid', 'sweet', 'bitter', 'rich'];
 
@@ -859,10 +2235,37 @@ function dbRowToSake(row, idx) {
 // ──────────────────────────────────────────────────────
 let sakes = [];
 let smallBrewerySakes = [];
-const filters = { type: 'all', region: null, taste: null };
 const liked = new Set();
+let aiHistory = [];
+let mySettings = { notify:true, profilePublic:true, postPublic:true };
 let currentId = null;
-let prevTab = 'catalog';
+let prevTab = 'recommend';
+
+function persistLiked() {
+  localStorage.setItem(storageKey('sf_liked'), JSON.stringify([...liked]));
+}
+function persistAiHistory() {
+  localStorage.setItem(storageKey('sf_ai_history'), JSON.stringify(aiHistory));
+}
+function persistSettings() {
+  localStorage.setItem(storageKey('sf_settings'), JSON.stringify(mySettings));
+}
+function loadUserScopedData() {
+  liked.clear();
+  aiHistory = [];
+  mySettings = { notify:true, profilePublic:true, postPublic:true };
+  try {
+    const rawLiked = JSON.parse(localStorage.getItem(storageKey('sf_liked')) || '[]');
+    rawLiked.forEach(id => liked.add(Number(id)));
+  } catch (_) {}
+  try {
+    aiHistory = JSON.parse(localStorage.getItem(storageKey('sf_ai_history')) || '[]');
+  } catch (_) {}
+  try {
+    const raw = JSON.parse(localStorage.getItem(storageKey('sf_settings')) || '{}');
+    mySettings = { ...mySettings, ...raw };
+  } catch (_) {}
+}
 
 // ──────────────────────────────────────────────────────
 // NAVIGATION
@@ -874,10 +2277,14 @@ function showTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.bnav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   window.scrollTo(0, 0);
-  if (tab === 'catalog') renderCards();
+  if (tab === 'recommend') renderCards();
   if (tab === 'map' && !mapLoaded) initMap();
   else if (tab === 'map' && googleMap) google.maps.event.trigger(googleMap, 'resize');
   if (tab === 'timeline' && !tlLoaded) { tlLoaded = true; loadTimeline(); }
+  if (tab === 'mypage') {
+    if (!tlLoaded) { tlLoaded = true; loadTimeline().then(() => renderMyPage()); }
+    renderMyPage();
+  }
   if (tab === 'scan') checkScanApiKey();
 }
 
@@ -886,130 +2293,120 @@ function goBack() { showTab(prevTab); }
 // ──────────────────────────────────────────────────────
 // SUPABASE: SAKES
 // ──────────────────────────────────────────────────────
-async function initSakes() {
+const CACHE_KEY = 'sf_sakes_v1';
+const CACHE_TTL = 5 * 60 * 1000; // 5分
+
+function getCachedSakes() {
   try {
-    const { data, error } = await sb.from('sakes').select('*').order('id');
-    if (error) throw error;
-    sakes = (data ?? []).map((row, i) => dbRowToSake(row, i));
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    if (Date.now() - ts < CACHE_TTL) return data;
+  } catch (_) {}
+  return null;
+}
+
+function setCachedSakes(data) {
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));
+  } catch (_) {}
+}
+
+async function initSakes() {
+  const loadingEl = document.getElementById('appLoading');
+  loadingEl && loadingEl.classList.remove('hidden');
+  try {
+    let rawData = getCachedSakes();
+    if (!rawData) {
+      const { data, error } = await sb.from('sakes').select('*').order('id');
+      if (error) throw error;
+      rawData = data ?? [];
+      setCachedSakes(rawData);
+    }
+    sakes = rawData.map((row, i) => dbRowToSake(row, i));
     smallBrewerySakes = sakes.filter(s => s.is_small_brewery !== false);
   } catch (e) {
     document.getElementById('cardGrid').innerHTML =
       `<div style="grid-column:1/-1;padding:40px;text-align:center;color:#c04040">読み込みエラー: ${e.message}</div>`;
+    loadingEl && loadingEl.classList.add('hidden');
     return;
   }
-  buildSidebarFilters();
   renderCards();
   populatePostSakeSelect();
-}
-
-function buildSidebarFilters() {
-  const types = [...new Set(sakes.map(s => s.type).filter(Boolean))].sort();
-  document.getElementById('filterTypeSection').innerHTML =
-    `<div class="filter-item active" onclick="setFilter(this,'type','all')"><span>すべて</span><span class="filter-count">${sakes.length}</span></div>` +
-    types.map(t => {
-      const n = sakes.filter(s => s.type === t).length;
-      return `<div class="filter-item" data-val="${t}" onclick="setFilter(this,'type','${t}')"><span>${t}</span><span class="filter-count">${n}</span></div>`;
-    }).join('');
-
-  const regions = [...new Set(sakes.map(s => s.region).filter(Boolean))].sort();
-  document.getElementById('filterRegionSection').innerHTML = regions.length
-    ? regions.map(r => {
-        const n = sakes.filter(s => s.region === r).length;
-        return `<div class="filter-item" data-val="${r}" onclick="setFilter(this,'region','${r}')"><span>${r}</span><span class="filter-count">${n}</span></div>`;
-      }).join('')
-    : '<div style="padding:8px 14px;font-size:12px;color:#b0a090">データなし</div>';
-
-  const cm = {};
-  sakes.forEach(s => s.tastes.forEach(t => { cm[t] = (cm[t]||0)+1; }));
-  const topTastes = Object.entries(cm).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  document.getElementById('filterTasteSection').innerHTML = topTastes.length
-    ? topTastes.map(([t,n]) =>
-        `<div class="filter-item" data-val="${t}" onclick="setFilter(this,'taste','${t}')"><span>${t}</span><span class="filter-count">${n}</span></div>`
-      ).join('')
-    : '<div style="padding:8px 14px;font-size:12px;color:#b0a090">データなし</div>';
+  renderMyPage();
+  loadingEl && loadingEl.classList.add('hidden');
 }
 
 function getFiltered() {
   let list = sakes.slice();
-  if (filters.type && filters.type !== 'all') list = list.filter(s => s.type === filters.type);
-  if (filters.region) list = list.filter(s => s.region === filters.region);
-  if (filters.taste)  list = list.filter(s => s.tastes.includes(filters.taste));
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
   if (q) list = list.filter(s => (s.name + s.kura + s.region + s.type).toLowerCase().includes(q));
-  if (document.getElementById('sortSelect').value === 'name') list.sort((a,b) => a.name.localeCompare(b.name, 'ja'));
+  list.sort((a,b) => a.name.localeCompare(b.name, 'ja'));
   return list;
 }
 
 function onSearchInput() {
-  const q = document.getElementById('searchInput').value.trim();
   const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
-  if (activeTab !== 'catalog') showTab('catalog');
+  if (activeTab !== 'recommend') showTab('recommend');
   renderCards();
 }
 
-function makeLabelHTML(s) {
-  if (s.image_url) return `<img src="${s.image_url}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover">`;
-  const parts = s.name.split(/\s+/);
+function bottlePlaceholder() {
+  return `<div class="bottle-ph">
+    <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <path d="M26 8h12v6l-2 4v32c0 3-2 6-4 6s-4-3-4-6V18l-2-4V8z" stroke="currentColor" stroke-width="2.5"/>
+      <path d="M26 22h12" stroke="currentColor" stroke-width="2"/>
+    </svg>
+    <span>IMAGE PLACEHOLDER</span>
+  </div>`;
+}
+
+function createSakeCardHTML(s, large = false) {
+  const media = s.image_url
+    ? `<img src="${s.image_url}" alt="${s.name}" loading="lazy">`
+    : bottlePlaceholder();
   return `
-    <div style="position:absolute;inset:0;background:linear-gradient(160deg,${s.c0},${s.c1})"></div>
-    <div style="position:relative;z-index:1;text-align:center;width:100%">
-      <div style="color:${s.ac};font-size:9px;letter-spacing:2px;margin-bottom:8px">${s.type}</div>
-      <div style="color:${s.tc};writing-mode:vertical-rl;font-size:22px;font-weight:900;letter-spacing:4px;margin:0 auto 8px;line-height:1">${parts[0]}</div>
-      ${parts[1] ? `<div style="color:${s.ac};font-size:10px;letter-spacing:2px">${parts[1]}</div>` : ''}
-      <div style="color:${s.tc};opacity:0.6;font-size:9px;margin-top:6px">${s.kura}</div>
-    </div>`;
+    <article class="sake-clean-card" onclick="showDetail(${s.id})">
+      <div class="sake-media">${media}</div>
+      <div class="sake-clean-body">
+        <div class="sake-clean-name"${large ? '' : ' style="font-size:18px"'}>${s.name}</div>
+        <div class="sake-clean-kura">${s.kura || '蔵元未登録'}</div>
+        ${s.region ? `<div class="region-chip">${s.region}</div>` : ''}
+        <div class="sake-clean-actions">
+          <button class="btn-clean-detail" onclick="event.stopPropagation();showDetail(${s.id})">詳細を見る</button>
+          ${s.ec_url
+            ? `<a class="btn-clean-amazon" href="${s.ec_url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Amazonで購入</a>`
+            : `<button class="btn-clean-amazon" type="button" style="opacity:.45;cursor:not-allowed" onclick="event.stopPropagation()">Amazonで購入</button>`}
+        </div>
+      </div>
+    </article>`;
 }
 
 function renderCards() {
-  const grid = document.getElementById('cardGrid');
+  const picks = (smallBrewerySakes.length ? smallBrewerySakes : sakes).slice(0, 3);
+  const weeklyHtml = picks.length
+    ? picks.map(s => createSakeCardHTML(s, true)).join('')
+    : '<div style="color:#6b7280;font-size:13px">おすすめ銘柄を準備中です。</div>';
+  const weeklyGrid = document.getElementById('weeklyGrid');
+  if (weeklyGrid) weeklyGrid.innerHTML = weeklyHtml;
+
   const list = getFiltered();
   document.getElementById('countDisplay').textContent = list.length;
-  grid.innerHTML = '';
+  const grid = document.getElementById('cardGrid');
+  if (!grid) return;
   if (!list.length) {
-    grid.innerHTML = '<div style="grid-column:1/-1;padding:40px;text-align:center;color:#8a7a6a">該当する銘柄がありません</div>';
+    grid.innerHTML = '<div style="grid-column:1/-1;padding:28px;text-align:center;color:#6b7280">該当する銘柄がありません</div>';
     return;
   }
-  list.forEach(s => {
-    const div = document.createElement('div');
-    div.className = 'sake-card';
-    const tasteTags = s.tastes.slice(0,2).map(t => `<span class="tag">${t}</span>`).join('');
-    div.innerHTML = `
-      <div class="card-image">
-        <div class="card-label" style="position:relative">${makeLabelHTML(s)}</div>
-        <button class="heart-btn ${liked.has(s.id)?'liked':''}" onclick="event.stopPropagation();toggleHeart(${s.id},this)">${liked.has(s.id)?'♥':'♡'}</button>
-      </div>
-      <div class="card-body">
-        <div class="card-kura">${s.kura}${s.region?' ｜ '+s.region:''}</div>
-        <div class="card-name">${s.name}</div>
-        <div class="card-tags">${s.type?`<span class="tag">${s.type}</span>`:''}${tasteTags}</div>
-        <div class="card-footer">
-          <div style="font-size:12px;color:#6a5040">詳細を見る</div>
-          ${s.ec_url
-            ? `<a href="${s.ec_url}" target="_blank" rel="noopener" class="btn-buy" onclick="event.stopPropagation()">購入</a>`
-            : `<button class="btn-buy" onclick="event.stopPropagation();showDetail(${s.id})">詳細</button>`}
-        </div>
-      </div>`;
-    div.addEventListener('click', () => showDetail(s.id));
-    grid.appendChild(div);
-  });
+  grid.innerHTML = list.slice(0, 12).map(s => createSakeCardHTML(s)).join('');
 }
 
 function toggleHeart(id, btn) {
+  if (!requireLogin('お気に入り機能を使うにはログインしてください')) return;
   if (liked.has(id)) { liked.delete(id); btn.classList.remove('liked'); btn.textContent='♡'; }
   else               { liked.add(id);    btn.classList.add('liked');    btn.textContent='♥'; }
-}
-
-function setFilter(el, key, val) {
-  const sec = el.closest('[id^="filter"]');
-  if (sec) sec.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
-  if (val === 'all' || filters[key] === val) {
-    filters[key] = val === 'all' ? 'all' : null;
-  } else {
-    filters[key] = val;
-    el.classList.add('active');
-  }
-  if (val === 'all') el.classList.add('active');
-  renderCards();
+  persistLiked();
+  if (document.getElementById('page-mypage').classList.contains('active')) renderMyPage();
 }
 
 // ──────────────────────────────────────────────────────
@@ -1022,16 +2419,14 @@ function showDetail(id) {
 
   if (s.image_url) {
     document.getElementById('detailLabel').innerHTML =
-      `<img src="${s.image_url}" alt="${s.name}" style="width:100%;height:100%;object-fit:contain;border-radius:8px">`;
+      `<img src="${s.image_url}" alt="${s.name}" loading="lazy" style="width:100%;height:100%;object-fit:contain;border-radius:8px">`;
   } else {
-    const parts = s.name.split(/\s+/);
     document.getElementById('detailLabel').innerHTML = `
-      <div style="position:absolute;inset:0;background:linear-gradient(160deg,${s.c0},${s.c1});border-radius:8px"></div>
-      <div style="position:relative;z-index:1;text-align:center">
-        <div style="color:${s.ac};font-size:11px;letter-spacing:3px;margin-bottom:12px">${s.type}</div>
-        <div style="color:${s.tc};writing-mode:vertical-rl;font-size:34px;font-weight:900;letter-spacing:8px;margin:0 auto 12px;line-height:1">${parts[0]}</div>
-        <div style="color:${s.ac};font-size:13px;letter-spacing:4px">${parts[1]||''}</div>
-        <div style="color:${s.tc};opacity:0.6;font-size:11px;margin-top:10px">${s.kura}</div>
+      <div style="position:absolute;inset:0;background:#f7f7f5;border-radius:8px;display:flex;align-items:center;justify-content:center"></div>
+      <div style="position:relative;z-index:1;text-align:center;color:#7c8086">
+        ${bottlePlaceholder()}
+        <div style="font-size:16px;color:#1c1c1c;margin-top:10px">${s.name}</div>
+        <div style="font-size:12px;color:#7c8086;margin-top:4px">${s.kura || ''}</div>
       </div>`;
   }
 
@@ -1045,7 +2440,7 @@ function showDetail(id) {
         <div style="flex:1;height:5px;background:#e8d8c0;border-radius:3px;overflow:hidden">
           <div style="height:100%;width:${v*20}%;background:var(--accent);border-radius:3px"></div>
         </div>
-        <span style="font-size:10px;color:#8a7a6a;width:10px">${v}</span>
+        <span style="font-size:10px;color:#6b7280;width:10px">${v}</span>
       </div>
     </td></tr>`).join('');
   document.getElementById('detailSpec').innerHTML =
@@ -1062,14 +2457,14 @@ function showDetail(id) {
     pairingEl.innerHTML = makePairingChips(s.taste_profile);
   }
 
-  document.getElementById('detailPrice').textContent = 'ECサイトで価格を確認';
+  document.getElementById('detailPrice').textContent = 'Amazonで価格を確認';
   const ecBtn = document.getElementById('detailEcBtn');
   if (s.ec_url) {
     ecBtn.onclick = () => window.open(s.ec_url, '_blank', 'noopener');
-    ecBtn.textContent = 'ECサイトで購入する →';
+    ecBtn.textContent = 'Amazonで購入する →';
     ecBtn.disabled = false; ecBtn.style.opacity = '1';
   } else {
-    ecBtn.onclick = null; ecBtn.textContent = 'ECサイト未登録';
+    ecBtn.onclick = null; ecBtn.textContent = 'Amazonリンク未登録';
     ecBtn.disabled = true; ecBtn.style.opacity = '0.5';
   }
 
@@ -1083,9 +2478,12 @@ function showDetail(id) {
 }
 
 function toggleDetailFav() {
+  if (!requireLogin('お気に入り機能を使うにはログインしてください')) return;
   const fb = document.getElementById('detailFavBtn');
   if (liked.has(currentId)) { liked.delete(currentId); fb.textContent='♡'; fb.className='btn-fav'; }
   else { liked.add(currentId); fb.textContent='♥'; fb.className='btn-fav liked'; }
+  persistLiked();
+  if (document.getElementById('page-mypage').classList.contains('active')) renderMyPage();
 }
 
 function makePairingChips(tp) {
@@ -1141,15 +2539,17 @@ let userVector = { umami:0, acid:0, sweet:0, bitter:0, rich:0 };
 function startQuiz() {
   quizStep = 0;
   userVector = { umami:0, acid:0, sweet:0, bitter:0, rich:0 };
-  document.getElementById('aiStartBtn').style.display = 'none';
+  document.getElementById('aiHero').style.display = 'none';
   document.getElementById('aiQuiz').classList.add('active');
   document.getElementById('quizResult').classList.remove('active');
   document.getElementById('quizAnalyzing').classList.remove('active');
+  document.getElementById('quizStep').style.display = 'block';
   renderQuizStep();
 }
 
 function retryQuiz() {
-  document.getElementById('aiStartBtn').style.display = 'block';
+  document.querySelector('.quiz-progress-wrap').style.display = '';
+  document.getElementById('aiHero').style.display = '';
   document.getElementById('aiQuiz').classList.remove('active');
   document.getElementById('quizResult').classList.remove('active');
 }
@@ -1157,15 +2557,19 @@ function retryQuiz() {
 function renderQuizStep() {
   const d = QUIZ_DATA[quizStep];
   const total = QUIZ_DATA.length;
-  document.getElementById('quizDots').innerHTML = Array.from({length:total},(_,i) =>
-    `<div class="step-dot ${i<quizStep?'done':i===quizStep?'active':''}"></div>`).join('');
-  document.getElementById('quizProgress').textContent = `質問 ${quizStep+1} / ${total}`;
+  const pct = Math.round(((quizStep + 1) / total) * 100);
+  document.getElementById('quizProgressFrac').textContent = `${quizStep + 1} / ${total}`;
+  document.getElementById('quizProgressFill').style.width = pct + '%';
+  document.getElementById('quizQLabel').textContent = `QUESTION ${quizStep + 1}`;
   document.getElementById('quizQuestion').textContent = d.q;
   document.getElementById('quizOptions').innerHTML = d.opts.map((o,i) => `
     <button class="quiz-option" onclick="answerQuiz(${i})">
       <span class="opt-icon">${o.icon}</span>${o.label}
     </button>`).join('');
   document.getElementById('quizStep').style.display = 'block';
+  document.getElementById('quizStep').style.animation = 'none';
+  void document.getElementById('quizStep').offsetWidth;
+  document.getElementById('quizStep').style.animation = '';
 }
 
 function answerQuiz(i) {
@@ -1180,8 +2584,9 @@ function answerQuiz(i) {
 
 function showAnalyzing() {
   document.getElementById('quizStep').style.display = 'none';
+  document.querySelector('.quiz-progress-wrap').style.display = 'none';
   document.getElementById('quizAnalyzing').classList.add('active');
-  setTimeout(showQuizResult, 1400);
+  setTimeout(showQuizResult, 1800);
 }
 
 function cosineSimilarity(a, b) {
@@ -1211,7 +2616,8 @@ function showQuizResult() {
 
   const topTaste = TASTE_KEYS.reduce((a,k) => userVector[k]>userVector[a]?k:a, TASTE_KEYS[0]);
   document.getElementById('quizResultSub').textContent =
-    `あなたの味覚プロファイル：${TASTE_LABEL[topTaste]}重視タイプ。相性スコア順に表示（小規模蔵元限定）。`;
+    `あなたの味覚プロファイル：${TASTE_LABEL[topTaste]}重視タイプ。相性スコア順に表示（精鋭酒蔵）。`;
+  saveAiHistory(topTaste, ranked);
 
   const rankStyles = [
     { cls:'rank-1', badge:'gold',   label:'🥇 1位' },
@@ -1228,7 +2634,7 @@ function showQuizResult() {
         <div class="result-taste-track"><div class="result-taste-fill" style="width:${(s.taste_profile?.[k]??0)*20}%"></div></div>
       </div>`).join('');
     const lbl = s.image_url
-      ? `<img src="${s.image_url}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover">`
+      ? `<img src="${s.image_url}" alt="${s.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover">`
       : `<div style="width:100%;height:100%;background:linear-gradient(160deg,${s.c0},${s.c1});display:flex;align-items:center;justify-content:center">
            <span style="color:${s.tc};writing-mode:vertical-rl;font-size:20px;font-weight:900;letter-spacing:4px">${s.name.split(/\s+/)[0]}</span>
          </div>`;
@@ -1244,7 +2650,7 @@ function showQuizResult() {
           <div style="display:flex;gap:6px;margin-top:6px">
             <button class="btn-buy-result" style="flex:1" onclick="showDetail(${s.id})">詳しく見る →</button>
             ${s.ec_url ? `<a href="${s.ec_url}" target="_blank" rel="noopener"
-              style="display:flex;align-items:center;padding:0 10px;background:#f0e8dc;color:#5a3a20;border-radius:6px;font-size:11px;font-weight:bold;text-decoration:none;border:1px solid #d4c4a8;white-space:nowrap">購入↗</a>` : ''}
+              style="display:flex;align-items:center;padding:0 10px;background:#f0f5ef;color:#2d5a27;border-radius:6px;font-size:11px;font-weight:bold;text-decoration:none;border:1px solid #c8d8c5;white-space:nowrap">Amazon↗</a>` : ''}
           </div>
         </div>
       </div>`;
@@ -1261,6 +2667,24 @@ let googleMap = null;
 let mapMarkers = [];
 let mapLocations = [];
 let mapCurrentFilter = 'all';
+let mapSearchQuery   = '';
+let mapPrefFilter    = '';
+
+const TYPE_PIN_COLORS  = { brewery:'#1D9E75', shop:'#D85A30', restaurant:'#9ca3af' };
+const TYPE_BADGE_BG    = { brewery:'#e6f7f1', shop:'#fde9e3', restaurant:'#f3f4f6' };
+const TYPE_BADGE_COLOR = { brewery:'#0F6E56', shop:'#B84820', restaurant:'#6b7280' };
+const TYPE_PIN_ICONS   = { brewery:'蔵', shop:'屋', restaurant:'食' };
+
+function getMapFiltered() {
+  let list = mapLocations;
+  if (mapCurrentFilter !== 'all') list = list.filter(l => l.type === mapCurrentFilter);
+  if (mapPrefFilter)   list = list.filter(l => l.pref === mapPrefFilter);
+  if (mapSearchQuery) {
+    const q = mapSearchQuery.toLowerCase();
+    list = list.filter(l => l.name.toLowerCase().includes(q) || (l.sake||'').toLowerCase().includes(q));
+  }
+  return list;
+}
 
 async function initMap() {
   mapLoaded = true;
@@ -1279,34 +2703,95 @@ async function loadMapLocations() {
   } catch (e) {
     mapLocations = [];
   }
+  buildPrefOptions();
   renderMapList();
+}
+
+function buildPrefOptions() {
+  const prefs = [...new Set(mapLocations.map(l => l.pref).filter(Boolean))].sort();
+  const sel = document.getElementById('mapPrefSelect');
+  sel.innerHTML = '<option value="">都道府県を選択…</option>' +
+    prefs.map(p => `<option value="${p}">${p}</option>`).join('');
 }
 
 function renderMapList() {
   const list = document.getElementById('mapList');
-  const filtered = mapCurrentFilter === 'all'
-    ? mapLocations
-    : mapLocations.filter(l => l.type === mapCurrentFilter);
+  const filtered = getMapFiltered();
+  const q = mapSearchQuery.toLowerCase();
+
+  document.getElementById('mapResultCount').textContent = filtered.length;
+
   if (!filtered.length) {
-    list.innerHTML = '<div style="padding:16px;font-size:13px;color:#8a7a6a">データなし</div>';
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:#6b7280;font-size:13px">該当する店舗がありません</div>';
     return;
   }
-  const typeColors = { brewery:'#e84b4b', shop:'#4b6be8', restaurant:'#4be86a' };
-  const typeLabels = { brewery:'酒蔵', shop:'酒屋', restaurant:'飲食店' };
-  list.innerHTML = filtered.map(l => `
-    <div class="map-list-item" onclick="panToLocation(${l.id})">
-      <div class="map-list-name">
-        <span class="map-list-dot" style="background:${typeColors[l.type]||'#888'}"></span>
-        ${l.name}
-      </div>
-      <div class="map-list-meta">${l.pref || ''} ・ ${typeLabels[l.type]||l.type}${l.sake?' ・ '+l.sake:''}</div>
-    </div>`).join('');
+
+  list.innerHTML = filtered.map(l => {
+    const pinColor   = TYPE_PIN_COLORS[l.type]  || '#888';
+    const badgeBg    = TYPE_BADGE_BG[l.type]    || '#f3f4f6';
+    const badgeColor = TYPE_BADGE_COLOR[l.type] || '#6b7280';
+    const pinIcon    = TYPE_PIN_ICONS[l.type]   || '●';
+    const typeLabel  = { brewery:'酒蔵', shop:'酒屋', restaurant:'飲食店' }[l.type] || l.type;
+
+    // 検索ワードをハイライト
+    const hlName = q
+      ? l.name.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi'), m => `<em>${m}</em>`)
+      : l.name;
+
+    return `
+      <div class="map-list-item" onclick="panToLocation(${l.id})">
+        <div class="map-list-pin" style="background:${pinColor}">${pinIcon}</div>
+        <div class="map-list-body">
+          <div class="map-list-name">${hlName}</div>
+          <div class="map-list-meta">
+            <span class="map-list-type-badge" style="background:${badgeBg};color:${badgeColor}">${typeLabel}</span>
+            ${l.pref ? `<span>${l.pref}</span>` : ''}
+            ${l.sake ? `<span>代表銘柄：${l.sake}</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 function setMapFilter(btn, type) {
-  document.querySelectorAll('.map-filter-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.map-type-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   mapCurrentFilter = type;
+  renderMapList();
+  updateMapMarkers();
+}
+
+function onMapSearch(val) {
+  mapSearchQuery = val.trim();
+  document.getElementById('mapSearchClear').classList.toggle('visible', mapSearchQuery.length > 0);
+  renderMapList();
+  updateMapMarkers();
+}
+
+function clearMapSearch() {
+  document.getElementById('mapSearchInput').value = '';
+  onMapSearch('');
+}
+
+function onMapPrefChange(val) {
+  mapPrefFilter = val;
+  renderMapList();
+  updateMapMarkers();
+  // 都道府県が選ばれたら代表地点へ移動
+  if (val && googleMap) {
+    const hit = mapLocations.find(l => l.pref === val && l.lat && l.lng);
+    if (hit) { googleMap.setCenter({ lat: hit.lat, lng: hit.lng }); googleMap.setZoom(10); }
+  }
+}
+
+function resetMapFilters() {
+  mapSearchQuery = '';
+  mapPrefFilter  = '';
+  mapCurrentFilter = 'all';
+  document.getElementById('mapSearchInput').value = '';
+  document.getElementById('mapPrefSelect').value  = '';
+  document.getElementById('mapSearchClear').classList.remove('visible');
+  document.querySelectorAll('.map-type-tab').forEach((b,i) => b.classList.toggle('active', i === 0));
   renderMapList();
   updateMapMarkers();
 }
@@ -1341,21 +2826,23 @@ window.onGoogleMapsReady = function() {
   addMapMarkers();
 };
 
-const TYPE_COLORS = { brewery:'#e84b4b', shop:'#4b6be8', restaurant:'#4be86a' };
-const TYPE_LABELS = { brewery:'酒蔵', shop:'酒屋', restaurant:'飲食店' };
+function closeAllInfoWindows() {
+  mapMarkers.forEach(m => m._info && m._info.close());
+}
 
 function addMapMarkers() {
+  // フィルター変更時に残留したInfoWindowを先にすべて閉じる
+  closeAllInfoWindows();
   mapMarkers.forEach(m => { m.map = null; });
   mapMarkers = [];
   if (!googleMap) return;
 
-  const filtered = mapCurrentFilter === 'all'
-    ? mapLocations
-    : mapLocations.filter(l => l.type === mapCurrentFilter);
+  const filtered = getMapFiltered();
 
   filtered.forEach(loc => {
     if (!loc.lat || !loc.lng) return;
-    const color = TYPE_COLORS[loc.type] || '#888';
+    const color     = TYPE_PIN_COLORS[loc.type] || '#888';
+    const typeLabel = { brewery:'酒蔵', shop:'酒屋', restaurant:'飲食店' }[loc.type] || loc.type;
 
     const pin = new google.maps.marker.PinElement({
       background: color,
@@ -1372,17 +2859,21 @@ function addMapMarkers() {
     });
 
     const info = new google.maps.InfoWindow({
-      content: `<div style="font-family:'Shippori Mincho','Yu Mincho',serif;padding:4px;min-width:180px">
-        <div style="font-weight:bold;font-size:14px;margin-bottom:4px">${loc.name}</div>
-        <div style="font-size:12px;color:#555">${loc.pref || ''} ・ ${TYPE_LABELS[loc.type]||loc.type}</div>
-        ${loc.sake ? `<div style="font-size:11px;color:#888;margin-top:4px">代表銘柄：${loc.sake}</div>` : ''}
+      content: `<div style="font-family:'Shippori Mincho','Yu Mincho',serif;padding:6px 4px;min-width:190px">
+        <div style="font-weight:bold;font-size:14px;margin-bottom:5px">${loc.name}</div>
+        <div style="font-size:12px;color:#555;display:flex;gap:6px;align-items:center">
+          <span style="background:${TYPE_BADGE_BG[loc.type]||'#f3f4f6'};color:${TYPE_BADGE_COLOR[loc.type]||'#6b7280'};padding:1px 6px;border-radius:3px;font-size:10px;font-weight:bold">${typeLabel}</span>
+          <span>${loc.pref || ''}</span>
+        </div>
+        ${loc.sake ? `<div style="font-size:11px;color:#888;margin-top:5px">代表銘柄：${loc.sake}</div>` : ''}
       </div>`,
     });
     marker.addListener('click', () => {
-      mapMarkers.forEach(m => m._info && m._info.close());
+      closeAllInfoWindows();
       info.open({ anchor: marker, map: googleMap });
     });
-    marker._info = info;
+    marker._locId = loc.id;
+    marker._info  = info;
     mapMarkers.push(marker);
   });
 }
@@ -1396,18 +2887,28 @@ function panToLocation(id) {
   if (!loc || !googleMap) return;
   googleMap.panTo({ lat: loc.lat, lng: loc.lng });
   googleMap.setZoom(15);
+  // 対応するマーカーのInfoWindowを開く
+  const marker = mapMarkers.find(m => m._locId === id);
+  if (marker) {
+    closeAllInfoWindows();
+    marker._info && marker._info.open({ anchor: marker, map: googleMap });
+  }
 }
 
 // ──────────────────────────────────────────────────────
 // LABEL SCAN
 // ──────────────────────────────────────────────────────
+// ── スキャン：現在の解析結果を保持 ──────────────────────
+let _scanResult = null; // { sakeData, imgUrl }
+
 function checkScanApiKey() {
-  document.getElementById('scanNoKey').style.display = ANTHROPIC_API_KEY ? 'none' : 'block';
+  document.getElementById('scanNoKey').style.display = OPENAI_API_KEY ? 'none' : 'block';
 }
 
 async function handleFileScan(input) {
   const file = input.files?.[0];
   if (!file) return;
+  input.value = '';
   await processScanImage(file);
 }
 
@@ -1433,7 +2934,7 @@ function captureFrame() {
   canvas.width = video.videoWidth; canvas.height = video.videoHeight;
   canvas.getContext('2d').drawImage(video, 0, 0);
   canvas.toBlob(blob => {
-    processScanImage(new File([blob], 'capture.jpg', { type:'image/jpeg' }));
+    processScanImage(new File([blob], 'capture.jpg', { type: 'image/jpeg' }));
   }, 'image/jpeg', 0.9);
   video.srcObject?.getTracks().forEach(t => t.stop());
   document.getElementById('scanVideoWrap').style.display = 'none';
@@ -1448,106 +2949,362 @@ function fileToBase64(file) {
   });
 }
 
+// Step 1: GPT-4o でラベル認識
+async function callGPT4oVision(base64, mediaType, prompt) {
+  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      max_tokens: 500,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: `data:${mediaType};base64,${base64}`, detail: 'high' } },
+          { type: 'text', text: prompt },
+        ],
+      }],
+    }),
+  });
+  if (!resp.ok) throw new Error(`GPT-4o ${resp.status}`);
+  const json = await resp.json();
+  return json.choices?.[0]?.message?.content ?? '';
+}
+
+// Step 2: Perplexity で SAKEPEDIA 品質の情報取得
+async function callPerplexity(name, brewery) {
+  if (!PERPLEXITY_API_KEY) return null;
+  try {
+    const resp = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-large-128k-online',
+        max_tokens: 600,
+        messages: [{
+          role: 'user',
+          content: `日本酒「${name}」（蔵元：${brewery}）についてJSON形式のみで回答してください：
+{"story":"蔵元の特徴やストーリー（2〜3文）","taste":"味わいの特徴（1文）","profile":{"umami":1〜5の整数,"acid":1〜5の整数,"sweet":1〜5の整数,"bitter":1〜5の整数,"rich":1〜5の整数},"price_range":"価格帯（例：1,500〜2,000円/720ml）","ec_url":"公式サイトまたは楽天・Amazonの商品URL（なければnull）"}
+必ずJSONのみ、余計な文字なしで回答してください。`,
+        }],
+      }),
+    });
+    if (!resp.ok) return null;
+    const json = await resp.json();
+    const text = json.choices?.[0]?.message?.content ?? '';
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) return null;
+    return JSON.parse(m[0]);
+  } catch (_) { return null; }
+}
+
 async function processScanImage(file) {
   hideScanResults();
+  _scanResult = null;
   const imgUrl = URL.createObjectURL(file);
   document.getElementById('scanResultImg').src = imgUrl;
 
-  if (!ANTHROPIC_API_KEY) {
+  if (!OPENAI_API_KEY) {
     document.getElementById('scanNoKey').style.display = 'block';
     return;
   }
 
-  document.getElementById('scanLoading').classList.add('active');
+  const loading = document.getElementById('scanLoading');
+  const stepMsg = document.getElementById('scanStepMsg');
+  loading.classList.add('active');
 
   try {
+    // Step 1: GPT-4o でラベル認識
+    stepMsg.textContent = 'Step 1/3 ラベルを認識中…';
     const base64 = await fileToBase64(file);
     const mediaType = file.type || 'image/jpeg';
+    const rawText = await callGPT4oVision(base64, mediaType,
+      '日本酒のラベル画像です。以下をJSON形式のみで回答してください（余計な文字なし）：' +
+      '{"name":"銘柄名","brewery":"蔵元名","prefecture":"都道府県（不明ならnull）","type":"種別（純米大吟醸など、不明ならnull）"}');
+    const labelMatch = rawText.match(/\{[\s\S]*?\}/);
+    if (!labelMatch) throw new Error('parse');
+    const label = JSON.parse(labelMatch[0]);
 
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 300,
-        messages: [{
-          role: 'user',
-          content: [
-            { type:'image', source:{ type:'base64', media_type: mediaType, data: base64 } },
-            { type:'text', text:'日本酒のラベル画像です。銘柄名と蔵元名を日本語で答えてください。JSON形式のみで回答：{"name":"銘柄名","brewery":"蔵元名"}' }
-          ]
-        }]
-      })
-    });
+    // Step 2: Perplexity で詳細情報
+    stepMsg.textContent = 'Step 2/3 詳細情報を取得中…';
+    const plex = await callPerplexity(label.name, label.brewery);
 
-    if (!resp.ok) throw new Error(`API Error: ${resp.status}`);
-    const result = await resp.json();
-    const text = result.content?.[0]?.text ?? '';
-    const match = text.match(/\{[^}]+\}/);
-    if (!match) throw new Error('Parse error');
-    const parsed = JSON.parse(match[0]);
-    await matchAndShowSake(parsed.name, parsed.brewery, imgUrl);
+    // Step 3: Supabase DB 照合
+    stepMsg.textContent = 'Step 3/3 データベースを照合中…';
+    let dbMatch = sakes.find(s =>
+      s.name.includes(label.name) || label.name.includes(s.name) ||
+      (label.brewery && (s.kura.includes(label.brewery) || label.brewery.includes(s.kura)))
+    );
+    if (!dbMatch) {
+      try {
+        const { data } = await sb.from('sakes').select('*')
+          .or(`name.ilike.%${label.name}%,brewery.ilike.%${label.brewery || ''}%`)
+          .limit(1);
+        if (data?.[0]) dbMatch = dbRowToSake(data[0], sakes.length);
+      } catch (_) {}
+    }
+
+    // マージ: DB > Perplexity > GPT-4o ラベル
+    const sakeData = {
+      id:           dbMatch?.id ?? null,
+      name:         dbMatch?.name ?? label.name,
+      brewery:      dbMatch?.kura ?? label.brewery,
+      region:       dbMatch?.region ?? label.prefecture ?? '',
+      type:         dbMatch?.type ?? label.type ?? '',
+      taste_profile: dbMatch?.taste_profile ?? plex?.profile ?? null,
+      story:        plex?.story ?? null,
+      taste:        plex?.taste ?? null,
+      price_range:  plex?.price_range ?? null,
+      ec_url:       dbMatch?.ec_url ?? (plex?.ec_url && plex.ec_url !== 'null' ? plex.ec_url : null),
+    };
+
+    _scanResult = { sakeData, imgUrl };
+    loading.classList.remove('active');
+    renderScanResult(sakeData);
+
+    // AI診断に好み記録
+    if (sakeData.taste_profile) saveScanToAiHistory(sakeData.taste_profile);
 
   } catch (e) {
-    document.getElementById('scanLoading').classList.remove('active');
+    loading.classList.remove('active');
     console.error('Scan error:', e);
     document.getElementById('scanNotFound').classList.add('active');
   }
 }
 
-async function matchAndShowSake(name, brewery, imgUrl) {
-  let match = sakes.find(s =>
-    s.name.includes(name) || name.includes(s.name) ||
-    (brewery && (s.kura.includes(brewery) || brewery.includes(s.kura)))
-  );
+function renderScanResult(s) {
+  document.getElementById('scanSakeName').textContent = s.name;
+  document.getElementById('scanSakeBrewery').textContent =
+    `${s.brewery || ''}${s.region ? ' ｜ ' + s.region : ''}${s.type ? ' ｜ ' + s.type : ''}`;
 
-  if (!match && sakes.length) {
-    try {
-      const { data } = await sb.from('sakes').select('*')
-        .or(`name.ilike.%${name}%,brewery.ilike.%${brewery||''}%`)
-        .limit(1);
-      if (data?.[0]) match = dbRowToSake(data[0], sakes.length);
-    } catch (_) {}
+  // ストーリー
+  if (s.story) {
+    document.getElementById('scanStoryText').textContent = s.story;
+    document.getElementById('scanStoryWrap').style.display = 'block';
   }
 
-  document.getElementById('scanLoading').classList.remove('active');
-
-  if (!match) {
-    document.getElementById('scanNotFound').classList.add('active');
-    return;
+  // 味わいプロフィール
+  if (s.taste_profile && Object.keys(s.taste_profile).length) {
+    const barsEl = document.getElementById('scanTasteBars');
+    barsEl.innerHTML = TASTE_KEYS.map(k => {
+      const v = Math.min(5, Math.max(0, s.taste_profile[k] || 0));
+      return `<div class="scan-taste-row">
+        <span class="scan-taste-key">${TASTE_LABEL[k]}</span>
+        <div class="scan-taste-bar-wrap">
+          <div class="scan-taste-bar-fill" style="width:${v * 20}%"></div>
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('scanTasteWrap').style.display = 'block';
   }
 
-  document.getElementById('scanSakeName').textContent = match.name;
-  document.getElementById('scanSakeBrewery').textContent = `${match.kura}${match.region?' ｜ '+match.region:''}`;
+  // 価格帯
+  if (s.price_range) {
+    document.getElementById('scanPriceText').textContent = '参考価格：' + s.price_range;
+    document.getElementById('scanPriceWrap').style.display = 'block';
+  }
+
+  // ペアリング（味わいから推定）
+  const tp = s.taste_profile || {};
+  const pairings = [];
+  if ((tp.umami || 0) >= 3) pairings.push('刺身・貝類');
+  if ((tp.acid  || 0) >= 3) pairings.push('白身魚・サラダ');
+  if ((tp.sweet || 0) >= 3) pairings.push('和菓子・フルーツ');
+  if ((tp.rich  || 0) >= 3) pairings.push('焼き鳥・煮物');
+  pairings.push('和食全般');
   document.getElementById('scanPairingChips').innerHTML =
-    ['旨味','酸味','甘み'].flatMap(k =>
-      (match.taste_profile?.[Object.keys(TASTE_LABEL).find(x=>TASTE_LABEL[x]===k)]||0) >= 3
-        ? [k==='旨味'?'刺身':k==='酸味'?'白身魚':'和菓子'] : []
-    ).concat(['和食全般']).slice(0,4)
-      .map(p => `<span class="scan-pairing-chip">${p}</span>`).join('');
+    pairings.slice(0, 4).map(p => `<span class="scan-pairing-chip">${p}</span>`).join('');
 
+  // 詳細ボタン（DBにあれば）
   const detailBtn = document.getElementById('scanDetailBtn');
-  detailBtn.onclick = () => showDetail(match.id);
+  if (s.id) {
+    detailBtn.onclick = () => showDetail(s.id);
+    detailBtn.style.display = '';
+  } else {
+    detailBtn.style.display = 'none';
+  }
 
+  // EC リンク
   const ecLink = document.getElementById('scanEcLink');
-  if (match.ec_url) {
-    ecLink.href = match.ec_url;
+  if (s.ec_url) {
+    ecLink.href = s.ec_url;
     ecLink.style.display = 'flex';
   } else {
-    ecLink.style.display = 'none';
+    // フォールバック: 楽天検索
+    const q = encodeURIComponent(s.name + ' 日本酒');
+    ecLink.href = `https://search.rakuten.co.jp/search/mall/${q}/`;
+    ecLink.style.display = 'flex';
   }
 
+  // 記録ボタン
+  const recordBtn = document.getElementById('scanRecordBtn');
+  recordBtn.textContent = '🍶 飲んだ記録に残す';
+  recordBtn.classList.remove('recorded');
+  recordBtn.style.display = isAuthenticated ? '' : 'none';
+
   document.getElementById('scanResultCard').classList.add('active');
+}
+
+// 飲んだ記録をタイムラインに保存
+async function recordScannedSake() {
+  if (!_scanResult || !isAuthenticated) return;
+  const btn = document.getElementById('scanRecordBtn');
+  if (btn.classList.contains('recorded')) return;
+  btn.textContent = '保存中…';
+  try {
+    const { sakeData, imgUrl } = _scanResult;
+    await sb.from('timeline_posts').insert({
+      user_id:       currentUserId,
+      user_name:     currentUserName,
+      sake_id:       sakeData.id,
+      sake_name:     sakeData.name,
+      photo_url:     imgUrl,
+      comment:       `スキャンで記録：${sakeData.name}${sakeData.brewery ? '（' + sakeData.brewery + '）' : ''}`,
+      location_type: 'home',
+      location_name: '',
+      is_public:     !!mySettings.postPublic,
+    });
+    btn.textContent = '✓ 記録しました';
+    btn.classList.add('recorded');
+    tlLoaded = false;
+  } catch (e) {
+    btn.textContent = '🍶 飲んだ記録に残す';
+    console.error('record error:', e);
+  }
+}
+
+// スキャン結果を AI 診断の好みデータとして蓄積
+function saveScanToAiHistory(tasteProfile) {
+  if (!isAuthenticated) return;
+  const topTaste = Object.entries(tasteProfile)
+    .sort((a, b) => b[1] - a[1])[0]?.[0] || 'umami';
+  const rec = {
+    at: new Date().toISOString(),
+    topTaste,
+    source: 'scan',
+    picks: [],
+  };
+  aiHistory.unshift(rec);
+  if (aiHistory.length > 30) aiHistory.length = 30;
+  persistAiHistory();
 }
 
 function hideScanResults() {
   document.getElementById('scanResultCard').classList.remove('active');
   document.getElementById('scanNotFound').classList.remove('active');
   document.getElementById('scanLoading').classList.remove('active');
+  document.getElementById('scanStoryWrap').style.display = 'none';
+  document.getElementById('scanTasteWrap').style.display = 'none';
+  document.getElementById('scanPriceWrap').style.display = 'none';
+}
+
+// ── メニュー解析 ─────────────────────────────────────────
+async function handleMenuScan(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  input.value = '';
+  await analyzeMenu(file);
+}
+
+async function analyzeMenu(file) {
+  const loading = document.getElementById('menuLoading');
+  const stepMsg = document.getElementById('menuStepMsg');
+  const results = document.getElementById('menuResults');
+  loading.classList.add('active');
+  results.innerHTML = '';
+
+  if (!OPENAI_API_KEY) {
+    loading.classList.remove('active');
+    results.innerHTML = '<div class="scan-not-found active">OpenAI API キーが設定されていません。</div>';
+    return;
+  }
+
+  try {
+    // Step 1: メニュー内の日本酒リストを抽出
+    stepMsg.textContent = 'メニューから日本酒を認識中…';
+    const base64 = await fileToBase64(file);
+    const mediaType = file.type || 'image/jpeg';
+    const rawText = await callGPT4oVision(base64, mediaType,
+      'このメニュー写真に載っている日本酒の銘柄名をすべて抽出してください。' +
+      'JSON配列のみで回答（例：["銘柄A","銘柄B"]）。日本酒でないものは除外。見つからなければ空配列 []。');
+    const arrMatch = rawText.match(/\[[\s\S]*?\]/);
+    const menuSakes = arrMatch ? JSON.parse(arrMatch[0]) : [];
+
+    if (!menuSakes.length) {
+      loading.classList.remove('active');
+      results.innerHTML = '<div style="text-align:center;color:#6b7280;padding:20px;font-size:13px">日本酒が見つかりませんでした。<br>メニュー全体が写った画像をお試しください。</div>';
+      return;
+    }
+
+    // Step 2: ユーザーの好み傾向を aiHistory から算出
+    stepMsg.textContent = `${menuSakes.length}銘柄を検出。好みと照合中…`;
+    const prefProfile = calcTastePreference();
+
+    // Step 3: GPT-4o で各銘柄とユーザー好みを照合してスコアリング
+    const prefDesc = Object.entries(prefProfile)
+      .sort((a, b) => b[1] - a[1])
+      .map(([k, v]) => `${TASTE_LABEL[k]}(${v.toFixed(1)})`)
+      .join('、');
+
+    const scoreText = await callGPT4oVision(base64, mediaType,
+      `ユーザーの好み傾向：${prefDesc}。\n` +
+      `メニューの日本酒：${menuSakes.join('、')}。\n` +
+      '各銘柄についてユーザーの好みとの相性スコア（0〜100）と理由を以下のJSON配列のみで回答してください：' +
+      '[{"name":"銘柄名","score":数値,"reason":"一言理由（15字以内）"},...]\n' +
+      'スコア降順で並べてください。');
+    const scoreMatch = scoreText.match(/\[[\s\S]*?\]/);
+    const scored = scoreMatch ? JSON.parse(scoreMatch[0]) : menuSakes.map(n => ({ name: n, score: 50, reason: '' }));
+
+    loading.classList.remove('active');
+    renderMenuResults(scored.slice(0, 6));
+
+  } catch (e) {
+    loading.classList.remove('active');
+    console.error('Menu scan error:', e);
+    results.innerHTML = '<div class="scan-not-found active">解析に失敗しました。もう一度お試しください。</div>';
+  }
+}
+
+function calcTastePreference() {
+  const base = { umami: 3, acid: 3, sweet: 3, bitter: 2, rich: 3 };
+  if (!aiHistory.length) return base;
+  // スキャン・診断履歴からスコアを集計
+  const counts = { ...base };
+  let n = 0;
+  for (const h of aiHistory.slice(0, 15)) {
+    if (h.topTaste && counts[h.topTaste] !== undefined) {
+      counts[h.topTaste] += 1;
+      n++;
+    }
+  }
+  return counts;
+}
+
+function renderMenuResults(scored) {
+  const results = document.getElementById('menuResults');
+  if (!scored.length) {
+    results.innerHTML = '<div style="text-align:center;color:#6b7280;padding:16px;font-size:13px">結果を取得できませんでした。</div>';
+    return;
+  }
+  const rankClass = ['', '', 'rank-2', 'rank-3'];
+  results.innerHTML = `
+    <div style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:12px">あなたへのおすすめ順</div>
+    ${scored.map((item, i) => `
+      <div class="scan-menu-item">
+        <div class="scan-menu-rank ${rankClass[i] || ''}">${i + 1}</div>
+        <div class="scan-menu-info">
+          <div class="scan-menu-name">${escHtml(item.name)}</div>
+          ${item.reason ? `<div class="scan-menu-reason">${escHtml(item.reason)}</div>` : ''}
+        </div>
+        <div class="scan-menu-score">${item.score}%</div>
+      </div>`).join('')}
+  `;
 }
 
 // ──────────────────────────────────────────────────────
@@ -1574,6 +3331,7 @@ async function loadTimeline() {
     return;
   }
   renderTimeline();
+  if (document.getElementById('page-mypage')?.classList.contains('active')) renderMyPage();
 }
 
 function setTimelineTab(mode) {
@@ -1606,12 +3364,12 @@ function renderTimeline() {
                 : p.location_name ? `🍴 ${p.location_name}` : '';
     return `
       <div class="tl-post">
-        ${p.photo_url ? `<img class="tl-post-img" src="${p.photo_url}" alt="投稿写真">` : ''}
+        ${p.photo_url ? `<img class="tl-post-img" src="${p.photo_url}" alt="投稿写真" loading="lazy">` : ''}
         <div class="tl-post-body">
           <div class="tl-post-header">
             <div class="tl-avatar" style="background:${color}">${char}</div>
             <div class="tl-post-meta">
-              <div class="tl-post-user">${name}${isOwn?' <span style="font-size:10px;color:#8a7a6a">(自分)</span>':''}</div>
+              <div class="tl-post-user">${name}${isOwn?' <span style="font-size:10px;color:#6b7280">(自分)</span>':''}</div>
               <div class="tl-post-time">${ts}</div>
             </div>
             ${!p.is_public ? '<span class="tl-private-badge">非公開</span>' : ''}
@@ -1639,11 +3397,124 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function saveAiHistory(topTaste, ranked) {
+  if (!isAuthenticated) return;
+  const rec = {
+    at: new Date().toISOString(),
+    topTaste,
+    picks: ranked.map(r => ({
+      id: r.sake.id,
+      name: r.sake.name,
+      score: Math.round(r.score * 100),
+    })),
+  };
+  aiHistory.unshift(rec);
+  if (aiHistory.length > 20) aiHistory.length = 20;
+  persistAiHistory();
+  if (document.getElementById('page-mypage')?.classList.contains('active')) renderMyPage();
+}
+
+function saveMyProfile() {
+  const name = document.getElementById('myNameInput').value.trim() || currentUserName;
+  const icon = document.getElementById('myIconInput').value.trim() || currentUserIcon || '🍶';
+  const bio  = document.getElementById('myBioInput').value.trim() || '日本酒の記録をゆるく楽しんでいます。';
+  currentUserName = name;
+  currentUserIcon = icon.slice(0, 2);
+  currentUserBio = bio;
+  localStorage.setItem('sf_uname', currentUserName);
+  localStorage.setItem('sf_uicon', currentUserIcon);
+  localStorage.setItem('sf_ubio', currentUserBio);
+  if (isAuthenticated) {
+    sb.from('profiles')
+      .upsert({ user_id: currentUserId, name: currentUserName, avatar_url: '' }, { onConflict: 'user_id' })
+      .then(() => {});
+  }
+  updateUserHeaderUI();
+  renderMyPage();
+}
+
+function saveMySettings() {
+  mySettings.notify = document.getElementById('myNotifyToggle').checked;
+  mySettings.profilePublic = document.getElementById('myProfilePublicToggle').checked;
+  mySettings.postPublic = document.getElementById('myPostPublicToggle').checked;
+  persistSettings();
+}
+
+function renderMyPage() {
+  const page = document.getElementById('page-mypage');
+  if (!page) return;
+
+  const mine = tlPosts.filter(p => p.user_id === currentUserId);
+  const drankCount = mine.filter(p => p.sake_name || p.sake_id).length;
+  const postCount = mine.length;
+  const favIds = [...liked];
+  const favSakes = favIds.map(id => sakes.find(s => s.id === id)).filter(Boolean);
+
+  document.getElementById('myAvatarPreview').textContent = (currentUserIcon || '🍶').slice(0, 2);
+  document.getElementById('myNameView').textContent = currentUserName;
+  document.getElementById('myBioView').textContent = currentUserBio;
+  document.getElementById('myNameInput').value = currentUserName;
+  document.getElementById('myIconInput').value = currentUserIcon;
+  document.getElementById('myBioInput').value = currentUserBio;
+
+  document.getElementById('myStatDrank').textContent = drankCount;
+  document.getElementById('myStatFav').textContent = favSakes.length;
+  document.getElementById('myStatPost').textContent = postCount;
+
+  const postsList = document.getElementById('myPostsList');
+  if (!isAuthenticated) {
+    postsList.innerHTML = '<div class="mypage-empty">ログインすると飲んだ記録を保存できます。</div>';
+  } else if (!mine.length) {
+    postsList.innerHTML = '<div class="mypage-empty">まだ投稿がありません。</div>';
+  } else {
+    postsList.innerHTML = mine.slice(0, 6).map(p => `
+      <div class="mypage-item">
+        <div>${escHtml(p.sake_name || '銘柄未登録')} / ${escHtml(p.comment || '')}</div>
+        <div class="mypage-item-sub">${formatTime(p.created_at)}</div>
+      </div>`).join('') +
+      '<button class="mypage-link-btn" onclick="showTab(\'timeline\');setTimelineTab(\'mine\')">自分の投稿をもっと見る</button>';
+  }
+
+  const favList = document.getElementById('myFavList');
+  if (!isAuthenticated) {
+    favList.innerHTML = '<div class="mypage-empty">ログインするとお気に入りを保存できます。</div>';
+  } else if (!favSakes.length) {
+    favList.innerHTML = '<div class="mypage-empty">お気に入りはまだありません。</div>';
+  } else {
+    favList.innerHTML = favSakes.slice(0, 8).map(s => `
+      <div class="mypage-item">
+        <div>${escHtml(s.name)}</div>
+        <div class="mypage-item-sub">${escHtml(s.kura || '')}${s.region ? ` ｜ ${escHtml(s.region)}` : ''}</div>
+        <button class="mypage-link-btn" onclick="showDetail(${s.id})">詳細を見る</button>
+      </div>`).join('');
+  }
+
+  const aiList = document.getElementById('myAiHistoryList');
+  if (!isAuthenticated) {
+    aiList.innerHTML = '<div class="mypage-empty">ログインするとAI診断履歴を保存できます。</div>';
+  } else if (!aiHistory.length) {
+    aiList.innerHTML = '<div class="mypage-empty">AI診断履歴はまだありません。</div>';
+  } else {
+    aiList.innerHTML = aiHistory.slice(0, 8).map(h => `
+      <div class="mypage-item">
+        <div>${formatTime(h.at)} / ${TASTE_LABEL[h.topTaste] || h.topTaste}タイプ</div>
+        <div class="mypage-item-sub">${(h.picks || []).slice(0, 3).map(p => `${escHtml(p.name)} (${p.score}%)`).join(' / ')}</div>
+      </div>`).join('');
+  }
+
+  document.getElementById('myNotifyToggle').checked = !!mySettings.notify;
+  document.getElementById('myProfilePublicToggle').checked = !!mySettings.profilePublic;
+  document.getElementById('myPostPublicToggle').checked = !!mySettings.postPublic;
+}
+
 // POST FORM
 let postPhotoFile = null;
 
 function openPostForm() {
+  if (!requireLogin('タイムライン投稿にはログインが必要です')) return;
   loadTimelineLocations();
+  document.getElementById('postIsPublic').checked = !!mySettings.postPublic;
+  updatePublicLabel();
   document.getElementById('postModal').classList.add('active');
 }
 
@@ -1655,7 +3526,7 @@ function closePostForm() {
   document.getElementById('postPhotoPlaceholder').style.display = 'block';
   document.getElementById('postComment').value = '';
   document.getElementById('postSakeSelect').value = '';
-  document.getElementById('postIsPublic').checked = true;
+  document.getElementById('postIsPublic').checked = !!mySettings.postPublic;
   updatePublicLabel();
 }
 
@@ -1716,6 +3587,7 @@ function updatePublicLabel() {
 }
 
 async function submitPost() {
+  if (!requireLogin('タイムライン投稿にはログインが必要です')) return;
   const comment = document.getElementById('postComment').value.trim();
   if (!postPhotoFile) { alert('写真を選択してください'); return; }
   if (!comment)       { alert('コメントを入力してください'); return; }
@@ -1755,6 +3627,7 @@ async function submitPost() {
     closePostForm();
     tlLoaded = false;
     await loadTimeline();
+    renderMyPage();
     alert('投稿しました！');
   } catch (e) {
     alert('投稿エラー: ' + e.message);
@@ -1764,10 +3637,138 @@ async function submitPost() {
 }
 
 // ──────────────────────────────────────────────────────
+// ONBOARDING
+// ──────────────────────────────────────────────────────
+const ONBOARDING_STEPS = [
+  {
+    icon: '🗺',
+    title: '全国の小さな酒蔵を発見',
+    desc: 'マップで全国の酒蔵・酒屋・飲食店を探索。あなたの知らない地域の名酒と出会いましょう。',
+  },
+  {
+    icon: '✨',
+    title: 'AIが好みの一本を提案',
+    desc: '5つの質問に答えるだけ。あなたの味覚プロファイルを解析して、ぴったりの銘柄を提案します。',
+  },
+  {
+    icon: '📱',
+    title: '飲んだ記録をシェア',
+    desc: '飲んだ日本酒を記録してタイムラインでシェア。お気に入りの一本を残しましょう。',
+  },
+];
+
+let onboardingStep = 0;
+
+function renderOnboardingStep() {
+  const s = ONBOARDING_STEPS[onboardingStep];
+  const isLast = onboardingStep === ONBOARDING_STEPS.length - 1;
+
+  document.getElementById('onboardingContent').innerHTML = `
+    <span class="onboarding-step-icon">${s.icon}</span>
+    <div class="onboarding-step-title">${s.title}</div>
+    <div class="onboarding-step-desc">${s.desc}</div>
+  `;
+
+  document.querySelectorAll('.onboarding-dot').forEach((d, i) => {
+    d.classList.toggle('active', i === onboardingStep);
+  });
+
+  document.getElementById('onboardingActions').innerHTML = isLast
+    ? `<button class="onboarding-start-btn" onclick="finishOnboarding()">🎯 AI診断をはじめる</button>
+       <button class="onboarding-skip-btn" onclick="closeOnboarding()">スキップ</button>`
+    : `<button class="onboarding-next-btn" onclick="nextOnboardingStep()">次へ →</button>
+       <button class="onboarding-skip-btn" onclick="closeOnboarding()">スキップ</button>`;
+}
+
+function nextOnboardingStep() {
+  if (onboardingStep < ONBOARDING_STEPS.length - 1) {
+    onboardingStep++;
+    renderOnboardingStep();
+  }
+}
+
+function closeOnboarding() {
+  localStorage.setItem('sf_onboarded', '1');
+  document.getElementById('onboardingOverlay').classList.remove('active');
+}
+
+function finishOnboarding() {
+  closeOnboarding();
+  showTab('ai');
+}
+
+function initOnboarding() {
+  if (localStorage.getItem('sf_onboarded')) return;
+  onboardingStep = 0;
+  renderOnboardingStep();
+  document.getElementById('onboardingOverlay').classList.add('active');
+}
+
+// ──────────────────────────────────────────────────────
 // INIT
 // ──────────────────────────────────────────────────────
+document.addEventListener('click', () => closeUserDropdown());
+
+async function initAuth() {
+  const { data } = await sb.auth.getSession();
+  await applyAuthState(data?.session?.user || null);
+  sb.auth.onAuthStateChange(async (event, session) => {
+    await applyAuthState(session?.user || null);
+    if (event === 'SIGNED_IN') closeAuthModal();
+  });
+}
+
+initAuth();
 initSakes();
 checkScanApiKey();
+initOnboarding();
+
+// ──────────────────────────────────────────────────────
+// TOP PAGE ANIMATIONS
+// ──────────────────────────────────────────────────────
+(function() {
+  // Header scroll color
+  var header = document.querySelector('header');
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 80) header.classList.add('header-scrolled');
+    else header.classList.remove('header-scrolled');
+  }, { passive: true });
+
+  // Fade-in hero elements immediately
+  document.querySelectorAll('.hero-full .fade-in').forEach(function(el, i) {
+    setTimeout(function() { el.classList.add('visible'); }, 120 + i * 100);
+  });
+
+  // Intersection Observer for scroll fade-ins
+  var io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  function observeAll() {
+    document.querySelectorAll('.fade-in:not(.visible)').forEach(function(el) { io.observe(el); });
+  }
+  setTimeout(observeAll, 200);
+  document.addEventListener('DOMContentLoaded', observeAll);
+
+  // Counter animation for mission stat
+  function animateCount(el, target, duration) {
+    var start = performance.now();
+    (function step(now) {
+      var p = Math.min((now - start) / duration, 1);
+      var ease = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(ease * target).toLocaleString() + '+';
+      if (p < 1) requestAnimationFrame(step);
+    })(start);
+  }
+  var stat1 = document.getElementById('missionStat1');
+  if (stat1) {
+    var cio = new IntersectionObserver(function(entries) {
+      if (entries[0].isIntersecting) { animateCount(stat1, 1400, 1600); cio.disconnect(); }
+    }, { threshold: 0.4 });
+    cio.observe(stat1);
+  }
+})();
 </script>
 </body>
 </html>

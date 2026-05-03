@@ -5,4 +5,6 @@ window.SAKEFIND_CONFIG = {
   SUPABASE_KEY:        'your-supabase-publishable-key',
   GOOGLE_MAPS_API_KEY: 'your-google-maps-api-key',
   ANTHROPIC_API_KEY:   'your-anthropic-api-key',
+  OPENAI_API_KEY:      'your-openai-api-key',
+  PERPLEXITY_API_KEY:  'your-perplexity-api-key',
 };
