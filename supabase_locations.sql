@@ -1802,3 +1802,27 @@ INSERT INTO locations (name,lat,lng,type,sake,pref) VALUES
 ('札幌 ススキノ 地酒 北の宴',    43.057, 141.353, 'restaurant', '北海道・東北銘柄',   '北海道札幌市'),
 ('金沢 片町 日本酒BAR 伝',       36.556, 136.656, 'restaurant', '北陸銘柄中心',       '石川県金沢市'),
 ('広島 流川 日本酒酒場 吟',      34.398, 132.456, 'restaurant', '広島・中国銘柄',     '広島県広島市');
+
+-- ============================================================
+-- 5. 座標検証済みデータの修正
+--    外部ソース（NAVITIME・観光サイト・geocoding.jp）で
+--    実住所から確認した正確な座標に上書きします
+-- ============================================================
+
+-- 北海道
+UPDATE locations SET lat=43.796226, lng=142.409440 WHERE name='男山'    AND pref='北海道';
+UPDATE locations SET lat=43.760286, lng=142.373113 WHERE name='高砂酒造' AND pref='北海道';
+UPDATE locations SET lat=43.061614, lng=141.770625 WHERE name='小林酒造' AND pref='北海道';
+
+-- 岩手県
+UPDATE locations SET lat=40.272872, lng=141.301237 WHERE name='南部美人' AND pref='岩手県';
+
+-- 宮城県
+UPDATE locations SET lat=38.208165, lng=140.569942 WHERE name='新澤醸造店' AND pref='宮城県';
+UPDATE locations SET lat=38.501988, lng=141.048741 WHERE name='一ノ蔵'     AND pref='宮城県';
+
+-- 秋田県
+UPDATE locations SET lat=39.710896, lng=140.114519 WHERE name='新政酒造' AND pref='秋田県';
+
+-- 山形県
+UPDATE locations SET lat=38.349176, lng=140.370557 WHERE name='出羽桜酒造' AND pref='山形県';
