@@ -31,8 +31,9 @@ create policy "Allow all reads" on timeline_posts
   for select using (true);
 
 drop policy if exists "Allow anon insert" on timeline_posts;
-create policy "Allow anon insert" on timeline_posts
-  for insert with check (true);
+drop policy if exists "Allow authenticated insert" on timeline_posts;
+create policy "Allow authenticated insert" on timeline_posts
+  for insert with check (auth.uid()::text = user_id);
 
 -- ============================================================
 -- 4. Supabase Storage: timeline バケット
