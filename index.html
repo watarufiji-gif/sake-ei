@@ -8,17 +8,37 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600;700&family=Shippori+Mincho:wght@400;600;700;800&family=Shippori+Mincho+B1:wght@400;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
+<script src="config.js" onerror="window.SAKEFIND_CONFIG_MISSING = true"></script>
 <script>
-  const _cfg = window.SAKEFIND_CONFIG || {};
-  const SUPABASE_URL        = _cfg.SUPABASE_URL        || 'https://vgoblfarmrljkujqyogd.supabase.co';
-  const SUPABASE_KEY        = _cfg.SUPABASE_KEY        || '';
-  const GOOGLE_MAPS_API_KEY  = _cfg.GOOGLE_MAPS_API_KEY  || '';
-  const ANTHROPIC_API_KEY    = _cfg.ANTHROPIC_API_KEY    || '';
-  const OPENAI_API_KEY       = _cfg.OPENAI_API_KEY       || '';
-  const PERPLEXITY_API_KEY   = _cfg.PERPLEXITY_API_KEY   || '';
-  if (!SUPABASE_URL) console.warn('[SakeFind] config.js が読み込まれていません。config.example.js をコピーして設定してください。');
-  const sb = window.supabase.createClient(SUPABASE_URL || 'https://placeholder.supabase.co', SUPABASE_KEY || 'placeholder');
+  // ── 設定の解決 ───────────────────────────────────────────
+  // ローカル開発: config.js（.gitignore 済み）の値を優先して使用
+  // GitHub Pages: config.js が 404 になるため下記フォールバックを使用
+  // SUPABASE_KEY は publishable (anon) key — RLS で保護されており公開可。
+  // 秘密キー（OPENAI / ANTHROPIC / PERPLEXITY / MAPS）は絶対にここへ書かないこと。
+  const _FALLBACK_CONFIG = {
+    SUPABASE_URL: 'https://vgoblfarmrljkujqyogd.supabase.co',
+    SUPABASE_KEY: 'sb_publishable_wJhDnc2aQ6WTEM7F5LzYDQ_ib5kov-v',
+    GOOGLE_MAPS_API_KEY: '',
+    ANTHROPIC_API_KEY:   '',
+    OPENAI_API_KEY:      '',
+    PERPLEXITY_API_KEY:  '',
+  };
+  const _local = window.SAKEFIND_CONFIG || {};
+  // config.example.js のプレースホルダ（'your-...'）は未設定として扱う
+  const _pick = (key) => {
+    const v = _local[key];
+    return (v && !String(v).includes('your-')) ? v : _FALLBACK_CONFIG[key];
+  };
+  const SUPABASE_URL         = _pick('SUPABASE_URL');
+  const SUPABASE_KEY         = _pick('SUPABASE_KEY');
+  const GOOGLE_MAPS_API_KEY  = _pick('GOOGLE_MAPS_API_KEY');
+  const ANTHROPIC_API_KEY    = _pick('ANTHROPIC_API_KEY');
+  const OPENAI_API_KEY       = _pick('OPENAI_API_KEY');
+  const PERPLEXITY_API_KEY   = _pick('PERPLEXITY_API_KEY');
+  if (window.SAKEFIND_CONFIG_MISSING) {
+    console.info('[SakeFind] config.js が見つかりません（GitHub Pages 等）。フォールバック設定で動作します。ローカル開発では config.example.js をコピーして config.js を作成してください。');
+  }
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 </script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -3697,7 +3717,7 @@ async function submitPost() {
 const ONBOARDING_STEPS = [
   {
     icon: '🗺',
-    title: '全国の小さな酒蔵を発見',
+    title: '全国の隠れた酒蔵を発見',
     desc: 'マップで全国の酒蔵・酒屋・飲食店を探索。あなたの知らない地域の名酒と出会いましょう。',
   },
   {

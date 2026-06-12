@@ -1,6 +1,12 @@
 // このファイルをコピーして config.js にリネームし、各キーを入力してください
 // $ cp config.example.js config.js
 // ※ config.js は .gitignore 済みです。キーを絶対に Git にコミットしないでください。
+//
+// 【GitHub Pages（本番）について】
+// 本番では config.js が存在しないため、index.html 内のフォールバック設定
+// （SUPABASE_URL / SUPABASE_KEY のみ）が自動的に使われます。
+// Supabase の publishable (anon) key は RLS で保護されており公開可能ですが、
+// それ以外の秘密キーはフォールバックに含めないでください。
 window.SAKEFIND_CONFIG = {
 
   // ── 必須 ─────────────────────────────────────────────
