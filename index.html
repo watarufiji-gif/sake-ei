@@ -445,6 +445,13 @@ nav { display: flex; align-items: center; gap: 0; flex: 1; justify-content: cent
 }
 .ai-page-wrap { max-width: 680px; margin: 0 auto; padding: 0 20px 80px; }
 
+/* MODE LABEL (探索パネル / クイズ の役割見出し) */
+.ai-mode-label {
+  text-align: center; font-size: 13px; font-weight: 800; letter-spacing: 0.1em;
+  color: var(--primary); margin: 40px 0 16px; font-family: 'Shippori Mincho B1', serif;
+}
+.ai-mode-label:first-child { margin-top: 32px; }
+
 /* HERO */
 .ai-hero { text-align: center; padding: 56px 16px 44px; position: relative; overflow: hidden; }
 .ai-hero-deco {
@@ -1585,7 +1592,7 @@ canvas#scanCanvas { display: none; }
 <div id="page-recommend" class="page active">
   <div class="new-top-page">
 
-    <!-- EXPLORE (探索フィルター) -->
+    <!-- HERO: はじめかたを選ぶ -->
     <section class="search-section">
       <div class="search-section-inner">
 
@@ -1595,102 +1602,6 @@ canvas#scanCanvas { display: none; }
           <button type="button" class="home-quicklinks-btn home-quicklinks-btn-outline" onclick="showTab('map')">酒蔵を見る</button>
         </div>
 
-        <div class="explore-panel fade-in">
-          <div class="explore-panel-title">
-            <span>🔎 どんな日本酒を探しましょう？</span>
-            <button type="button" class="explore-help" title="専門用語なしで、気分や産地から日本酒を絞り込めます">?</button>
-          </div>
-
-          <!-- 産地 -->
-          <div class="explore-group">
-            <div class="explore-group-label">🗾 産地は？</div>
-            <div class="explore-chips" id="exploreRegionChips">
-              <button type="button" class="explore-chip active" data-group="region" data-value="omakase" onclick="selectExploreChip(this)">おまかせ</button>
-              <button type="button" class="explore-chip" data-group="region" data-value="hokkaido_tohoku" onclick="selectExploreChip(this)">北海道・東北</button>
-              <button type="button" class="explore-chip" data-group="region" data-value="kanto" onclick="selectExploreChip(this)">関東</button>
-              <button type="button" class="explore-chip" data-group="region" data-value="chubu_hokuriku" onclick="selectExploreChip(this)">中部・北陸</button>
-              <button type="button" class="explore-chip" data-group="region" data-value="kinki" onclick="selectExploreChip(this)">近畿</button>
-              <button type="button" class="explore-chip" data-group="region" data-value="chugoku_shikoku" onclick="selectExploreChip(this)">中国・四国</button>
-              <button type="button" class="explore-chip" data-group="region" data-value="kyushu" onclick="selectExploreChip(this)">九州・沖縄</button>
-            </div>
-          </div>
-
-          <!-- 温度 -->
-          <div class="explore-group">
-            <div class="explore-group-label">🌡️ どの温度で飲む？</div>
-            <div class="explore-cards" id="exploreTempCards">
-              <button type="button" class="explore-card" data-group="temp" data-value="cold" onclick="selectExploreChip(this)"><span class="explore-card-icon">❄️</span><span class="explore-card-label">冷酒</span></button>
-              <button type="button" class="explore-card" data-group="temp" data-value="room" onclick="selectExploreChip(this)"><span class="explore-card-icon">🍶</span><span class="explore-card-label">常温</span></button>
-              <button type="button" class="explore-card" data-group="temp" data-value="warm" onclick="selectExploreChip(this)"><span class="explore-card-icon">♨️</span><span class="explore-card-label">ぬる燗</span></button>
-              <button type="button" class="explore-card" data-group="temp" data-value="hot" onclick="selectExploreChip(this)"><span class="explore-card-icon">🔥</span><span class="explore-card-label">熱燗</span></button>
-              <button type="button" class="explore-card active" data-group="temp" data-value="any" onclick="selectExploreChip(this)"><span class="explore-card-icon">🤷</span><span class="explore-card-label">どれでも</span></button>
-            </div>
-          </div>
-
-          <!-- シーン -->
-          <div class="explore-group">
-            <div class="explore-group-label">🎉 どんなシーン？</div>
-            <div class="explore-cards" id="exploreSceneCards">
-              <button type="button" class="explore-card" data-group="scene" data-value="solo" onclick="selectExploreChip(this)"><span class="explore-card-icon">🍶</span><span class="explore-card-label">おひとり</span></button>
-              <button type="button" class="explore-card" data-group="scene" data-value="date" onclick="selectExploreChip(this)"><span class="explore-card-icon">🥂</span><span class="explore-card-label">デート</span></button>
-              <button type="button" class="explore-card" data-group="scene" data-value="friends" onclick="selectExploreChip(this)"><span class="explore-card-icon">🍻</span><span class="explore-card-label">友達と</span></button>
-              <button type="button" class="explore-card" data-group="scene" data-value="family" onclick="selectExploreChip(this)"><span class="explore-card-icon">🎉</span><span class="explore-card-label">家族・お祝い</span></button>
-              <button type="button" class="explore-card" data-group="scene" data-value="gift" onclick="selectExploreChip(this)"><span class="explore-card-icon">🎁</span><span class="explore-card-label">手土産</span></button>
-            </div>
-          </div>
-
-          <!-- 価格帯 -->
-          <div class="explore-group">
-            <div class="explore-group-label">💰 価格帯は？<span style="font-weight:400;color:var(--text-muted);font-size:11px;margin-left:4px">（720ml基準）</span></div>
-            <div class="explore-chips" id="explorePriceChips">
-              <button type="button" class="explore-chip" data-group="price" data-value="budget" onclick="selectExploreChip(this)">〜1,500円</button>
-              <button type="button" class="explore-chip" data-group="price" data-value="casual" onclick="selectExploreChip(this)">〜3,000円</button>
-              <button type="button" class="explore-chip" data-group="price" data-value="premium" onclick="selectExploreChip(this)">〜5,000円</button>
-              <button type="button" class="explore-chip" data-group="price" data-value="luxury" onclick="selectExploreChip(this)">5,000円〜</button>
-            </div>
-          </div>
-
-          <!-- 味わい（唯一の情報源: taste_profile） -->
-          <div class="explore-group">
-            <div class="explore-group-label">👅 どんな味わい？<span style="font-weight:400;color:var(--text-muted);font-size:11px;margin-left:4px">（複数選択可）</span></div>
-            <div class="explore-chips" id="exploreFlavorChips">
-              <button type="button" class="explore-chip" data-flavor="umami" onclick="toggleExploreFlavor(this)">🌾 旨味</button>
-              <button type="button" class="explore-chip" data-flavor="acid" onclick="toggleExploreFlavor(this)">🍋 酸味</button>
-              <button type="button" class="explore-chip" data-flavor="sweet" onclick="toggleExploreFlavor(this)">🍯 甘み</button>
-              <button type="button" class="explore-chip" data-flavor="bitter" onclick="toggleExploreFlavor(this)">🌿 苦味</button>
-              <button type="button" class="explore-chip" data-flavor="rich" onclick="toggleExploreFlavor(this)">💎 濃醇</button>
-            </div>
-          </div>
-
-          <!-- さらにこだわる -->
-          <button type="button" class="explore-advanced-toggle" id="exploreAdvancedToggle" onclick="toggleExploreAdvanced()">
-            <span>＋ さらにこだわる（特定名称・飲み口）</span>
-            <span class="explore-advanced-arrow">▾</span>
-          </button>
-          <div class="explore-advanced-body" id="exploreAdvancedBody">
-            <div class="explore-group">
-              <div class="explore-group-label">特定名称</div>
-              <select class="explore-select" id="exploreDesignationSelect">
-                <option value="">指定しない</option>
-                <option value="純米">純米</option>
-                <option value="純米吟醸">純米吟醸</option>
-                <option value="純米大吟醸">純米大吟醸</option>
-                <option value="本醸造">本醸造</option>
-                <option value="吟醸">吟醸</option>
-                <option value="大吟醸">大吟醸</option>
-              </select>
-            </div>
-            <div class="explore-group">
-              <div class="explore-group-label">飲み口</div>
-              <div class="explore-chips" id="exploreMouthfeelChips">
-                <button type="button" class="explore-chip" data-group="mouthfeel" data-value="light" onclick="selectExploreChip(this)">🐰 軽やか</button>
-                <button type="button" class="explore-chip" data-group="mouthfeel" data-value="bold" onclick="selectExploreChip(this)">🐢 どっしり</button>
-              </div>
-            </div>
-          </div>
-
-          <button type="button" class="explore-search-btn" onclick="runExploreSearch()">🔍 日本酒を探す！</button>
-        </div>
       </div>
     </section>
 
@@ -1858,7 +1769,116 @@ canvas#scanCanvas { display: none; }
 <div id="page-ai" class="page">
   <div class="ai-page-wrap">
 
-    <!-- HERO -->
+    <!-- EXPLORE (探索フィルター): 自分で選んで探す -->
+    <div class="ai-mode-label fade-in">🔎 自分で選んで探す</div>
+
+    <div class="explore-panel fade-in">
+      <div class="explore-panel-title">
+        <span>🔎 どんな日本酒を探しましょう？</span>
+        <button type="button" class="explore-help" title="専門用語なしで、気分や産地から日本酒を絞り込めます">?</button>
+      </div>
+
+      <!-- 産地 -->
+      <div class="explore-group">
+        <div class="explore-group-label">🗾 産地は？</div>
+        <div class="explore-chips" id="exploreRegionChips">
+          <button type="button" class="explore-chip active" data-group="region" data-value="omakase" onclick="selectExploreChip(this)">おまかせ</button>
+          <button type="button" class="explore-chip" data-group="region" data-value="hokkaido_tohoku" onclick="selectExploreChip(this)">北海道・東北</button>
+          <button type="button" class="explore-chip" data-group="region" data-value="kanto" onclick="selectExploreChip(this)">関東</button>
+          <button type="button" class="explore-chip" data-group="region" data-value="chubu_hokuriku" onclick="selectExploreChip(this)">中部・北陸</button>
+          <button type="button" class="explore-chip" data-group="region" data-value="kinki" onclick="selectExploreChip(this)">近畿</button>
+          <button type="button" class="explore-chip" data-group="region" data-value="chugoku_shikoku" onclick="selectExploreChip(this)">中国・四国</button>
+          <button type="button" class="explore-chip" data-group="region" data-value="kyushu" onclick="selectExploreChip(this)">九州・沖縄</button>
+        </div>
+      </div>
+
+      <!-- 温度 -->
+      <div class="explore-group">
+        <div class="explore-group-label">🌡️ どの温度で飲む？</div>
+        <div class="explore-cards" id="exploreTempCards">
+          <button type="button" class="explore-card" data-group="temp" data-value="cold" onclick="selectExploreChip(this)"><span class="explore-card-icon">❄️</span><span class="explore-card-label">冷酒</span></button>
+          <button type="button" class="explore-card" data-group="temp" data-value="room" onclick="selectExploreChip(this)"><span class="explore-card-icon">🍶</span><span class="explore-card-label">常温</span></button>
+          <button type="button" class="explore-card" data-group="temp" data-value="warm" onclick="selectExploreChip(this)"><span class="explore-card-icon">♨️</span><span class="explore-card-label">ぬる燗</span></button>
+          <button type="button" class="explore-card" data-group="temp" data-value="hot" onclick="selectExploreChip(this)"><span class="explore-card-icon">🔥</span><span class="explore-card-label">熱燗</span></button>
+          <button type="button" class="explore-card active" data-group="temp" data-value="any" onclick="selectExploreChip(this)"><span class="explore-card-icon">🤷</span><span class="explore-card-label">どれでも</span></button>
+        </div>
+      </div>
+
+      <!-- シーン -->
+      <div class="explore-group">
+        <div class="explore-group-label">🎉 どんなシーン？</div>
+        <div class="explore-cards" id="exploreSceneCards">
+          <button type="button" class="explore-card" data-group="scene" data-value="solo" onclick="selectExploreChip(this)"><span class="explore-card-icon">🍶</span><span class="explore-card-label">おひとり</span></button>
+          <button type="button" class="explore-card" data-group="scene" data-value="date" onclick="selectExploreChip(this)"><span class="explore-card-icon">🥂</span><span class="explore-card-label">デート</span></button>
+          <button type="button" class="explore-card" data-group="scene" data-value="friends" onclick="selectExploreChip(this)"><span class="explore-card-icon">🍻</span><span class="explore-card-label">友達と</span></button>
+          <button type="button" class="explore-card" data-group="scene" data-value="family" onclick="selectExploreChip(this)"><span class="explore-card-icon">🎉</span><span class="explore-card-label">家族・お祝い</span></button>
+          <button type="button" class="explore-card" data-group="scene" data-value="gift" onclick="selectExploreChip(this)"><span class="explore-card-icon">🎁</span><span class="explore-card-label">手土産</span></button>
+        </div>
+      </div>
+
+      <!-- 価格帯 -->
+      <div class="explore-group">
+        <div class="explore-group-label">💰 価格帯は？<span style="font-weight:400;color:var(--text-muted);font-size:11px;margin-left:4px">（720ml基準）</span></div>
+        <div class="explore-chips" id="explorePriceChips">
+          <button type="button" class="explore-chip" data-group="price" data-value="budget" onclick="selectExploreChip(this)">〜1,500円</button>
+          <button type="button" class="explore-chip" data-group="price" data-value="casual" onclick="selectExploreChip(this)">〜3,000円</button>
+          <button type="button" class="explore-chip" data-group="price" data-value="premium" onclick="selectExploreChip(this)">〜5,000円</button>
+          <button type="button" class="explore-chip" data-group="price" data-value="luxury" onclick="selectExploreChip(this)">5,000円〜</button>
+        </div>
+      </div>
+
+      <!-- 味わい（唯一の情報源: taste_profile） -->
+      <div class="explore-group">
+        <div class="explore-group-label">👅 どんな味わい？<span style="font-weight:400;color:var(--text-muted);font-size:11px;margin-left:4px">（複数選択可）</span></div>
+        <div class="explore-chips" id="exploreFlavorChips">
+          <button type="button" class="explore-chip" data-flavor="umami" onclick="toggleExploreFlavor(this)">🌾 旨味</button>
+          <button type="button" class="explore-chip" data-flavor="acid" onclick="toggleExploreFlavor(this)">🍋 酸味</button>
+          <button type="button" class="explore-chip" data-flavor="sweet" onclick="toggleExploreFlavor(this)">🍯 甘み</button>
+          <button type="button" class="explore-chip" data-flavor="bitter" onclick="toggleExploreFlavor(this)">🌿 苦味</button>
+          <button type="button" class="explore-chip" data-flavor="rich" onclick="toggleExploreFlavor(this)">💎 濃醇</button>
+        </div>
+      </div>
+
+      <!-- さらにこだわる -->
+      <button type="button" class="explore-advanced-toggle" id="exploreAdvancedToggle" onclick="toggleExploreAdvanced()">
+        <span>＋ さらにこだわる（特定名称・飲み口）</span>
+        <span class="explore-advanced-arrow">▾</span>
+      </button>
+      <div class="explore-advanced-body" id="exploreAdvancedBody">
+        <div class="explore-group">
+          <div class="explore-group-label">特定名称</div>
+          <select class="explore-select" id="exploreDesignationSelect">
+            <option value="">指定しない</option>
+            <option value="純米">純米</option>
+            <option value="純米吟醸">純米吟醸</option>
+            <option value="純米大吟醸">純米大吟醸</option>
+            <option value="本醸造">本醸造</option>
+            <option value="吟醸">吟醸</option>
+            <option value="大吟醸">大吟醸</option>
+          </select>
+        </div>
+        <div class="explore-group">
+          <div class="explore-group-label">飲み口</div>
+          <div class="explore-chips" id="exploreMouthfeelChips">
+            <button type="button" class="explore-chip" data-group="mouthfeel" data-value="light" onclick="selectExploreChip(this)">🐰 軽やか</button>
+            <button type="button" class="explore-chip" data-group="mouthfeel" data-value="bold" onclick="selectExploreChip(this)">🐢 どっしり</button>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="explore-search-btn" onclick="runExploreSearch()">🔍 日本酒を探す！</button>
+    </div>
+
+    <div class="search-result-header" style="margin-top:32px">
+      <h3 id="aiExploreResultTitle" style="font-size:18px;font-weight:800;color:var(--heading);font-family:'Shippori Mincho B1',serif">おすすめ銘柄</h3>
+      <div class="search-result-count"><span id="exploreCountDisplay">-</span> 件</div>
+    </div>
+    <div id="exploreResults" class="search-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--text-muted)">条件を選んで「日本酒を探す！」を押すと、ここに結果が表示されます</div>
+    </div>
+
+    <!-- HERO: AIに診断してもらう -->
+    <div class="ai-mode-label fade-in" style="margin-top:64px">🤖 AIに診断してもらう</div>
     <div class="ai-hero" id="aiHero">
       <div class="ai-hero-deco">酒</div>
       <span class="ai-hero-icon">🍶</span>
@@ -2735,9 +2755,9 @@ function getExploreFiltered() {
 
 function runExploreSearch() {
   const list = getExploreFiltered();
-  document.getElementById('exploreResultTitle').textContent = exploreState.flavors.size ? '検索結果' : 'おすすめ銘柄';
-  document.getElementById('countDisplay').textContent = list.length;
-  const grid = document.getElementById('cardGrid');
+  document.getElementById('aiExploreResultTitle').textContent = exploreState.flavors.size ? '検索結果' : 'おすすめ銘柄';
+  document.getElementById('exploreCountDisplay').textContent = list.length;
+  const grid = document.getElementById('exploreResults');
   if (!list.length) {
     grid.innerHTML = `<div class="explore-empty">
       条件に合う日本酒が見つかりませんでした。<br>
