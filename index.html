@@ -115,6 +115,8 @@ nav { display: flex; align-items: center; gap: 0; flex: 1; justify-content: cent
   content: ''; position: absolute; bottom: 0; left: 13px; right: 13px;
   height: 2px; background: var(--cta); border-radius: 2px 2px 0 0;
 }
+.tab-btn-subtle { font-size: 12px; opacity: 0.7; }
+.tab-btn-subtle:hover { opacity: 1; }
 .header-search-wrap { flex: 1; max-width: 280px; }
 .search-bar {
   width: 100%; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3);
@@ -1366,6 +1368,17 @@ canvas#scanCanvas { display: none; }
 .howto-step-title { font-size: 24px; font-weight: 700; margin-bottom: 12px; color: white; font-family: 'Shippori Mincho B1', serif; }
 .howto-step-desc { font-size: 14px; color: rgba(255,255,255,0.78); line-height: 1.85; }
 
+/* ---- ABOUT PAGE ---- */
+.about-hero { height: auto; min-height: 0; padding: 96px 24px 88px; }
+.about-mission-section { background: #FAF6F0; padding: 96px 24px; text-align: center; }
+.about-mission-inner { max-width: 700px; margin: 0 auto; }
+.about-mission-title {
+  font-size: clamp(24px, 3.4vw, 34px); font-weight: 800; color: #3D1A1A;
+  margin-bottom: 26px; letter-spacing: 0.03em;
+  font-family: 'Shippori Mincho B1', 'Shippori Mincho', serif;
+}
+.about-mission-body { font-size: 15px; color: var(--text-muted); line-height: 2.1; letter-spacing: 0.02em; }
+
 /* ---- BREWERY VOICES ---- */
 .voices-section { background: #FAF6F0; padding: 100px 24px; }
 .voices-inner { max-width: 860px; margin: 0 auto; }
@@ -1387,6 +1400,96 @@ canvas#scanCanvas { display: none; }
 .search-result-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 28px; }
 .search-result-count { color: var(--text-muted); font-size: 13px; }
 .search-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
+
+/* ---- HOME QUICKLINKS (探索パネル上の簡易CTA) ---- */
+.home-quicklinks {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 16px; font-size: 13px; color: var(--text-muted);
+}
+.home-quicklinks-btn {
+  border-radius: 999px; padding: 8px 20px; font-size: 13px; font-weight: 700;
+  font-family: inherit; cursor: pointer; letter-spacing: 0.03em; transition: all 0.2s;
+}
+.home-quicklinks-btn-primary { background: var(--cta); color: #fff; border: none; }
+.home-quicklinks-btn-primary:hover { background: var(--cta-hover); }
+.home-quicklinks-btn-outline { background: none; border: 1.5px solid var(--border); color: var(--text); }
+.home-quicklinks-btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+/* ---- EXPLORE (探索フィルター) ---- */
+.explore-panel {
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px;
+  padding: 28px 22px; margin-bottom: 36px;
+}
+.explore-panel-title {
+  display: flex; align-items: center; gap: 8px; font-size: 19px; font-weight: 800;
+  color: var(--heading); margin-bottom: 26px; font-family: 'Shippori Mincho B1', serif;
+}
+.explore-help {
+  width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border);
+  color: var(--text-muted); font-size: 11px; font-weight: 700; background: none;
+  cursor: pointer; line-height: 1; display: inline-flex; align-items: center; justify-content: center;
+}
+.explore-group { margin-bottom: 26px; }
+.explore-group:last-child { margin-bottom: 0; }
+.explore-group-label {
+  display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700;
+  color: var(--heading); margin-bottom: 12px;
+}
+.explore-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.explore-chip {
+  border: 1.5px solid var(--border); background: #fff; color: var(--text);
+  border-radius: 999px; padding: 8px 16px; font-size: 13px; font-family: inherit;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.explore-chip:hover { border-color: var(--primary); }
+.explore-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
+.explore-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; }
+.explore-card {
+  border: 1.5px solid var(--border); background: #fff; border-radius: 14px;
+  padding: 14px 8px; text-align: center; cursor: pointer; font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+.explore-card:hover { border-color: var(--primary); }
+.explore-card.active { border-color: var(--primary); background: var(--accent-light); }
+.explore-card-icon { font-size: 24px; display: block; margin-bottom: 6px; }
+.explore-card-label { font-size: 12px; color: var(--text); }
+.explore-card.active .explore-card-label { color: var(--primary); font-weight: 700; }
+.explore-advanced-toggle {
+  width: 100%; text-align: left; background: none; border: none; border-top: 1px dashed var(--border);
+  padding: 16px 0 0; margin-top: 4px; font-size: 14px; font-weight: 700; color: var(--primary);
+  cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: space-between;
+}
+.explore-advanced-toggle .explore-advanced-arrow { transition: transform 0.2s; }
+.explore-advanced-toggle.open .explore-advanced-arrow { transform: rotate(180deg); }
+.explore-advanced-body { display: none; padding-top: 20px; }
+.explore-advanced-body.open { display: block; }
+.explore-advanced-body .explore-group:last-child { margin-bottom: 0; }
+.explore-select {
+  width: 100%; max-width: 320px; padding: 10px 12px; border: 1.5px solid var(--border);
+  border-radius: 10px; font-size: 14px; font-family: inherit; color: var(--text); background: #fff;
+}
+.explore-search-btn {
+  width: 100%; margin-top: 28px; padding: 16px; border: none; border-radius: 14px;
+  background: var(--primary); color: #fff; font-size: 16px; font-weight: 800;
+  font-family: inherit; cursor: pointer; transition: background 0.15s;
+}
+.explore-search-btn:hover { background: var(--primary-dark); }
+.explore-result-tags { display: flex; flex-wrap: wrap; gap: 5px; margin: -4px 0 12px; }
+.explore-tag {
+  font-size: 11px; padding: 3px 9px; border-radius: 999px; background: var(--accent-light);
+  color: var(--primary); border: 1px solid #e8d0c8;
+}
+.explore-empty {
+  grid-column: 1 / -1; text-align: center; padding: 48px 20px; color: var(--text-muted);
+}
+.explore-empty button {
+  margin-top: 14px; border: 1.5px solid var(--primary); color: var(--primary); background: #fff;
+  border-radius: 999px; padding: 10px 22px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+}
+@media (max-width: 640px) {
+  .explore-panel { padding: 22px 16px; }
+  .explore-cards { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); }
+}
 
 /* ---- FOOTER ---- */
 .site-footer { background: #8B1A1A; color: #FAF6F0; padding: 72px 24px 44px; }
@@ -1453,6 +1556,7 @@ canvas#scanCanvas { display: none; }
     <button class="tab-btn" data-tab="scan" onclick="showTab('scan')">スキャン</button>
     <button class="tab-btn" data-tab="timeline" onclick="showTab('timeline')">タイムライン</button>
     <button class="tab-btn" data-tab="mypage" onclick="showTab('mypage')">マイページ</button>
+    <button class="tab-btn tab-btn-subtle" data-tab="about" onclick="showTab('about')">About Us</button>
   </nav>
   <div class="header-search-wrap">
     <input type="text" class="search-bar" placeholder="銘柄・蔵元・産地を検索…" id="searchInput" oninput="onSearchInput()">
@@ -1481,35 +1585,112 @@ canvas#scanCanvas { display: none; }
 <div id="page-recommend" class="page active">
   <div class="new-top-page">
 
-    <!-- HERO -->
-    <section class="hero-full">
-      <div class="hero-inner">
-        <span class="hero-eyebrow-new fade-in">Sake Find</span>
-        <h1 class="hero-title-main fade-in fade-in-delay-1">
-          まだ知られていない、
-          <em>本物の日本酒を</em>
-          あなたへ。
-        </h1>
-        <p class="hero-subtitle-new fade-in fade-in-delay-2">全国の隠れた酒蔵を、紡ぐ。</p>
-        <div class="hero-cta-group fade-in fade-in-delay-3">
-          <button class="btn-hero-primary" onclick="showTab('ai')">AI診断ではじめる</button>
-          <button class="btn-hero-outline" onclick="showTab('map')">酒蔵を見る</button>
-        </div>
-      </div>
-      <div class="hero-scroll-hint">
-        <span>SCROLL</span>
-        <div class="scroll-arrow"></div>
-      </div>
-    </section>
+    <!-- EXPLORE (探索フィルター) -->
+    <section class="search-section">
+      <div class="search-section-inner">
 
-    <!-- MISSION -->
-    <section class="mission-section">
-      <div class="mission-inner">
-        <div class="mission-stat fade-in" id="missionStat1">1,400</div>
-        <div class="mission-stat-label fade-in">以上の酒蔵が、日本にあります。</div>
-        <div class="mission-stat-2 fade-in">約半数</div>
-        <div class="mission-stat-label fade-in">廃業の危機にある蔵が、全国に。</div>
-        <div class="mission-tagline fade-in">SakeFindは、その一つひとつを残したい。</div>
+        <div class="home-quicklinks fade-in">
+          <span>🍶 まずは、はじめかたを選ぶ</span>
+          <button type="button" class="home-quicklinks-btn home-quicklinks-btn-primary" onclick="showTab('ai')">AI診断ではじめる</button>
+          <button type="button" class="home-quicklinks-btn home-quicklinks-btn-outline" onclick="showTab('map')">酒蔵を見る</button>
+        </div>
+
+        <div class="explore-panel fade-in">
+          <div class="explore-panel-title">
+            <span>🔎 どんな日本酒を探しましょう？</span>
+            <button type="button" class="explore-help" title="専門用語なしで、気分や産地から日本酒を絞り込めます">?</button>
+          </div>
+
+          <!-- 産地 -->
+          <div class="explore-group">
+            <div class="explore-group-label">🗾 産地は？</div>
+            <div class="explore-chips" id="exploreRegionChips">
+              <button type="button" class="explore-chip active" data-group="region" data-value="omakase" onclick="selectExploreChip(this)">おまかせ</button>
+              <button type="button" class="explore-chip" data-group="region" data-value="hokkaido_tohoku" onclick="selectExploreChip(this)">北海道・東北</button>
+              <button type="button" class="explore-chip" data-group="region" data-value="kanto" onclick="selectExploreChip(this)">関東</button>
+              <button type="button" class="explore-chip" data-group="region" data-value="chubu_hokuriku" onclick="selectExploreChip(this)">中部・北陸</button>
+              <button type="button" class="explore-chip" data-group="region" data-value="kinki" onclick="selectExploreChip(this)">近畿</button>
+              <button type="button" class="explore-chip" data-group="region" data-value="chugoku_shikoku" onclick="selectExploreChip(this)">中国・四国</button>
+              <button type="button" class="explore-chip" data-group="region" data-value="kyushu" onclick="selectExploreChip(this)">九州・沖縄</button>
+            </div>
+          </div>
+
+          <!-- 温度 -->
+          <div class="explore-group">
+            <div class="explore-group-label">🌡️ どの温度で飲む？</div>
+            <div class="explore-cards" id="exploreTempCards">
+              <button type="button" class="explore-card" data-group="temp" data-value="cold" onclick="selectExploreChip(this)"><span class="explore-card-icon">❄️</span><span class="explore-card-label">冷酒</span></button>
+              <button type="button" class="explore-card" data-group="temp" data-value="room" onclick="selectExploreChip(this)"><span class="explore-card-icon">🍶</span><span class="explore-card-label">常温</span></button>
+              <button type="button" class="explore-card" data-group="temp" data-value="warm" onclick="selectExploreChip(this)"><span class="explore-card-icon">♨️</span><span class="explore-card-label">ぬる燗</span></button>
+              <button type="button" class="explore-card" data-group="temp" data-value="hot" onclick="selectExploreChip(this)"><span class="explore-card-icon">🔥</span><span class="explore-card-label">熱燗</span></button>
+              <button type="button" class="explore-card active" data-group="temp" data-value="any" onclick="selectExploreChip(this)"><span class="explore-card-icon">🤷</span><span class="explore-card-label">どれでも</span></button>
+            </div>
+          </div>
+
+          <!-- シーン -->
+          <div class="explore-group">
+            <div class="explore-group-label">🎉 どんなシーン？</div>
+            <div class="explore-cards" id="exploreSceneCards">
+              <button type="button" class="explore-card" data-group="scene" data-value="solo" onclick="selectExploreChip(this)"><span class="explore-card-icon">🍶</span><span class="explore-card-label">おひとり</span></button>
+              <button type="button" class="explore-card" data-group="scene" data-value="date" onclick="selectExploreChip(this)"><span class="explore-card-icon">🥂</span><span class="explore-card-label">デート</span></button>
+              <button type="button" class="explore-card" data-group="scene" data-value="friends" onclick="selectExploreChip(this)"><span class="explore-card-icon">🍻</span><span class="explore-card-label">友達と</span></button>
+              <button type="button" class="explore-card" data-group="scene" data-value="family" onclick="selectExploreChip(this)"><span class="explore-card-icon">🎉</span><span class="explore-card-label">家族・お祝い</span></button>
+              <button type="button" class="explore-card" data-group="scene" data-value="gift" onclick="selectExploreChip(this)"><span class="explore-card-icon">🎁</span><span class="explore-card-label">手土産</span></button>
+            </div>
+          </div>
+
+          <!-- 価格帯 -->
+          <div class="explore-group">
+            <div class="explore-group-label">💰 価格帯は？<span style="font-weight:400;color:var(--text-muted);font-size:11px;margin-left:4px">（720ml基準）</span></div>
+            <div class="explore-chips" id="explorePriceChips">
+              <button type="button" class="explore-chip" data-group="price" data-value="budget" onclick="selectExploreChip(this)">〜1,500円</button>
+              <button type="button" class="explore-chip" data-group="price" data-value="casual" onclick="selectExploreChip(this)">〜3,000円</button>
+              <button type="button" class="explore-chip" data-group="price" data-value="premium" onclick="selectExploreChip(this)">〜5,000円</button>
+              <button type="button" class="explore-chip" data-group="price" data-value="luxury" onclick="selectExploreChip(this)">5,000円〜</button>
+            </div>
+          </div>
+
+          <!-- 味わい（唯一の情報源: taste_profile） -->
+          <div class="explore-group">
+            <div class="explore-group-label">👅 どんな味わい？<span style="font-weight:400;color:var(--text-muted);font-size:11px;margin-left:4px">（複数選択可）</span></div>
+            <div class="explore-chips" id="exploreFlavorChips">
+              <button type="button" class="explore-chip" data-flavor="umami" onclick="toggleExploreFlavor(this)">🌾 旨味</button>
+              <button type="button" class="explore-chip" data-flavor="acid" onclick="toggleExploreFlavor(this)">🍋 酸味</button>
+              <button type="button" class="explore-chip" data-flavor="sweet" onclick="toggleExploreFlavor(this)">🍯 甘み</button>
+              <button type="button" class="explore-chip" data-flavor="bitter" onclick="toggleExploreFlavor(this)">🌿 苦味</button>
+              <button type="button" class="explore-chip" data-flavor="rich" onclick="toggleExploreFlavor(this)">💎 濃醇</button>
+            </div>
+          </div>
+
+          <!-- さらにこだわる -->
+          <button type="button" class="explore-advanced-toggle" id="exploreAdvancedToggle" onclick="toggleExploreAdvanced()">
+            <span>＋ さらにこだわる（特定名称・飲み口）</span>
+            <span class="explore-advanced-arrow">▾</span>
+          </button>
+          <div class="explore-advanced-body" id="exploreAdvancedBody">
+            <div class="explore-group">
+              <div class="explore-group-label">特定名称</div>
+              <select class="explore-select" id="exploreDesignationSelect">
+                <option value="">指定しない</option>
+                <option value="純米">純米</option>
+                <option value="純米吟醸">純米吟醸</option>
+                <option value="純米大吟醸">純米大吟醸</option>
+                <option value="本醸造">本醸造</option>
+                <option value="吟醸">吟醸</option>
+                <option value="大吟醸">大吟醸</option>
+              </select>
+            </div>
+            <div class="explore-group">
+              <div class="explore-group-label">飲み口</div>
+              <div class="explore-chips" id="exploreMouthfeelChips">
+                <button type="button" class="explore-chip" data-group="mouthfeel" data-value="light" onclick="selectExploreChip(this)">🐰 軽やか</button>
+                <button type="button" class="explore-chip" data-group="mouthfeel" data-value="bold" onclick="selectExploreChip(this)">🐢 どっしり</button>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="explore-search-btn" onclick="runExploreSearch()">🔍 日本酒を探す！</button>
+        </div>
       </div>
     </section>
 
@@ -1540,10 +1721,88 @@ canvas#scanCanvas { display: none; }
       </div>
     </section>
 
-    <!-- HOW TO USE -->
+    <!-- SAKE LIST (酒一覧) -->
+    <section class="search-section">
+      <div class="search-section-inner">
+        <div class="search-result-header">
+          <h2 class="section-title-new fade-in" id="exploreResultTitle" style="font-size:clamp(22px,3vw,32px);margin-bottom:0">おすすめ銘柄</h2>
+          <div class="search-result-count"><span id="countDisplay">-</span> 件</div>
+        </div>
+        <div id="cardGrid" class="search-grid">
+          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
+          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
+          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
+          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
+          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-logo">🍶 SakeFind</div>
+        <div class="footer-mission">
+          本物の日本酒を愛する人と、隠れた酒蔵を紡ぐ。<br>
+          技術で、文化を次の世代へ。
+        </div>
+        <div class="footer-divider"></div>
+        <div class="footer-bottom">
+          <div class="footer-copy">© 2025 SakeFind. All rights reserved.</div>
+          <div class="footer-links">
+            <a href="#" onclick="showTab('about');return false;">About Us（私たちについて）</a>
+          </div>
+          <div class="footer-links" style="display:none">
+            <a href="#">プライバシーポリシー</a>
+            <a href="#">利用規約</a>
+            <a href="#">お問い合わせ</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+</div>
+
+<!-- ===== ABOUT ===== -->
+<div id="page-about" class="page">
+  <div class="new-top-page">
+
+    <!-- HERO (世界観コピー / 移設) -->
+    <section class="hero-full about-hero">
+      <div class="hero-inner">
+        <span class="hero-eyebrow-new fade-in">Sake Find</span>
+        <h1 class="hero-title-main fade-in fade-in-delay-1">
+          まだ知られていない、
+          <em>本物の日本酒を</em>
+          あなたへ。
+        </h1>
+        <p class="hero-subtitle-new fade-in fade-in-delay-2">全国の隠れた酒蔵を、紡ぐ。</p>
+      </div>
+    </section>
+
+    <!-- MISSION STATEMENT + 統計ストーリー（ホームより移設） -->
+    <section class="about-mission-section">
+      <div class="about-mission-inner">
+        <h2 class="about-mission-title fade-in">なぜ、無名の酒蔵にこだわるのか。</h2>
+        <p class="about-mission-body fade-in">
+          大量生産・大量流通の仕組みの中で、名前も知られないまま消えていく蔵元が数多く存在します。<br>
+          SakeFindは、そうした「隠れた酒蔵」の技術と想いを、次の世代へつなぐために生まれました。
+        </p>
+      </div>
+      <div class="mission-inner" style="margin-top:56px">
+        <div class="mission-stat fade-in" id="missionStat1">1,400</div>
+        <div class="mission-stat-label fade-in">以上の酒蔵が、日本にあります。</div>
+        <div class="mission-stat-2 fade-in">約半数</div>
+        <div class="mission-stat-label fade-in">廃業の危機にある蔵が、全国に。</div>
+        <div class="mission-tagline fade-in">SakeFindは、その一つひとつを残したい。</div>
+      </div>
+    </section>
+
+    <!-- ABOUT US / 私たちについて（旧: SakeFindの使い方。見出しの表示テキストのみ変更、移設） -->
     <section class="howto-section">
       <div class="howto-inner">
-        <h2 class="howto-title fade-in">SakeFindの使い方</h2>
+        <h2 class="howto-title fade-in">About Us / 私たちについて</h2>
         <div class="howto-steps">
           <div class="howto-step fade-in">
             <div class="howto-step-num">STEP 01</div>
@@ -1566,44 +1825,6 @@ canvas#scanCanvas { display: none; }
         </div>
       </div>
     </section>
-
-    <!-- ALL SAKES -->
-    <section class="search-section">
-      <div class="search-section-inner">
-        <div class="search-result-header">
-          <h2 class="section-title-new fade-in" style="font-size:clamp(22px,3vw,32px);margin-bottom:0">おすすめ銘柄</h2>
-          <div class="search-result-count"><span id="countDisplay">-</span> 件</div>
-        </div>
-        <div id="cardGrid" class="search-grid">
-          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
-          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
-          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
-          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
-          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
-          <div class="skeleton-sake-card"><div class="skeleton-media"></div><div class="skeleton-body"><div class="skeleton-line lg"></div><div class="skeleton-line w75"></div><div class="skeleton-line w50"></div><div class="skeleton-btn-row"><div class="skeleton-btn" style="flex:1"></div><div class="skeleton-btn" style="width:80px"></div></div></div></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="site-footer">
-      <div class="footer-inner">
-        <div class="footer-logo">🍶 SakeFind</div>
-        <div class="footer-mission">
-          本物の日本酒を愛する人と、隠れた酒蔵を紡ぐ。<br>
-          技術で、文化を次の世代へ。
-        </div>
-        <div class="footer-divider"></div>
-        <div class="footer-bottom">
-          <div class="footer-copy">© 2025 SakeFind. All rights reserved.</div>
-          <div class="footer-links" style="display:none">
-            <a href="#">プライバシーポリシー</a>
-            <a href="#">利用規約</a>
-            <a href="#">お問い合わせ</a>
-          </div>
-        </div>
-      </div>
-    </footer>
 
   </div>
 </div>
@@ -2257,6 +2478,10 @@ function dbRowToSake(row, idx) {
     region: row.prefecture ?? '', type: row.type ?? '', taste_profile: tp, tastes,
     description: row.description ?? '', image_url: row.image_url ?? null,
     ec_url: row.ec_url ?? null, is_small_brewery: row.is_small_brewery ?? true,
+    // 探索フィルター用（zone/price_band/serving_temps/scene_tags は見た目のみで今回は未配線）
+    zone: row.zone ?? null, price_band: row.price_band ?? null,
+    serving_temps: row.serving_temps ?? [], scene_tags: row.scene_tags ?? [],
+    name_en: row.name_en ?? null,
     ...col,
   };
 }
@@ -2411,7 +2636,9 @@ function bottlePlaceholder() {
   </div>`;
 }
 
-function createSakeCardHTML(s, large = false) {
+const PRICE_BAND_LABEL = { budget: '〜1,500円', casual: '〜3,000円', premium: '〜5,000円', luxury: '5,000円〜' };
+
+function createSakeCardHTML(s, large = false, showExploreTags = false) {
   const media = s.image_url
     ? `<img src="${s.image_url}" alt="${s.name}" loading="lazy">`
     : bottlePlaceholder();
@@ -2420,8 +2647,13 @@ function createSakeCardHTML(s, large = false) {
       <div class="sake-media">${media}</div>
       <div class="sake-clean-body">
         <div class="sake-clean-name"${large ? '' : ' style="font-size:18px"'}>${s.name}</div>
+        ${s.name_en ? `<div class="sake-clean-kura" style="font-style:italic">${s.name_en}</div>` : ''}
         <div class="sake-clean-kura">${s.kura || '蔵元未登録'}</div>
         ${s.region ? `<div class="region-chip">${s.region}</div>` : ''}
+        ${showExploreTags && (s.tastes.length || s.price_band) ? `<div class="explore-result-tags">
+          ${s.tastes.map(t => `<span class="explore-tag">${t}</span>`).join('')}
+          ${s.price_band ? `<span class="explore-tag">${PRICE_BAND_LABEL[s.price_band] || s.price_band}</span>` : ''}
+        </div>` : ''}
         <div class="sake-clean-actions">
           <button class="btn-clean-detail" onclick="event.stopPropagation();showDetail(${s.id})">詳細を見る</button>
           ${s.ec_url
@@ -2457,6 +2689,64 @@ function toggleHeart(id, btn) {
   else               { liked.add(id);    btn.classList.add('liked');    btn.textContent='♥'; }
   persistLiked();
   if (document.getElementById('page-mypage').classList.contains('active')) renderMyPage();
+}
+
+// ──────────────────────────────────────────────────────
+// EXPLORE（探索フィルター）
+// 味わいは taste_profile を唯一の情報源とする（flavor_tags 等の別カラムは持たない）。
+// 現状は8件程度のためクライアント側（メモリ上の sakes 配列）でフィルタする。
+// 件数が増えたらサーバー側 (例: .gte / taste_profile->>'umami' 等) へ移行する。
+// 産地・温度・シーン・特定名称・飲み口は今回は見た目のみで検索条件には使わない。
+// ──────────────────────────────────────────────────────
+const exploreState = { flavors: new Set() };
+
+function selectExploreChip(el) {
+  const group = el.dataset.group;
+  document.querySelectorAll(`[data-group="${group}"]`).forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function toggleExploreFlavor(el) {
+  const key = el.dataset.flavor;
+  if (exploreState.flavors.has(key)) { exploreState.flavors.delete(key); el.classList.remove('active'); }
+  else { exploreState.flavors.add(key); el.classList.add('active'); }
+}
+
+function toggleExploreAdvanced() {
+  document.getElementById('exploreAdvancedToggle').classList.toggle('open');
+  document.getElementById('exploreAdvancedBody').classList.toggle('open');
+}
+
+function resetExploreFilters() {
+  exploreState.flavors.clear();
+  document.querySelectorAll('#exploreFlavorChips .explore-chip').forEach(b => b.classList.remove('active'));
+  runExploreSearch();
+}
+
+function getExploreFiltered() {
+  let list = sakes.slice();
+  if (exploreState.flavors.size) {
+    const wanted = [...exploreState.flavors];
+    list = list.filter(s => wanted.some(key => (s.taste_profile?.[key] ?? 0) >= 3));
+  }
+  list.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+  return list;
+}
+
+function runExploreSearch() {
+  const list = getExploreFiltered();
+  document.getElementById('exploreResultTitle').textContent = exploreState.flavors.size ? '検索結果' : 'おすすめ銘柄';
+  document.getElementById('countDisplay').textContent = list.length;
+  const grid = document.getElementById('cardGrid');
+  if (!list.length) {
+    grid.innerHTML = `<div class="explore-empty">
+      条件に合う日本酒が見つかりませんでした。<br>
+      <button type="button" onclick="resetExploreFilters()">条件をゆるめる</button>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = list.map(s => createSakeCardHTML(s, false, true)).join('');
+  grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ──────────────────────────────────────────────────────
