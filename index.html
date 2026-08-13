@@ -1408,20 +1408,6 @@ canvas#scanCanvas { display: none; }
 .search-result-count { color: var(--text-muted); font-size: 13px; }
 .search-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
 
-/* ---- HOME QUICKLINKS (探索パネル上の簡易CTA) ---- */
-.home-quicklinks {
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  margin-bottom: 16px; font-size: 13px; color: var(--text-muted);
-}
-.home-quicklinks-btn {
-  border-radius: 999px; padding: 8px 20px; font-size: 13px; font-weight: 700;
-  font-family: inherit; cursor: pointer; letter-spacing: 0.03em; transition: all 0.2s;
-}
-.home-quicklinks-btn-primary { background: var(--cta); color: #fff; border: none; }
-.home-quicklinks-btn-primary:hover { background: var(--cta-hover); }
-.home-quicklinks-btn-outline { background: none; border: 1.5px solid var(--border); color: var(--text); }
-.home-quicklinks-btn-outline:hover { border-color: var(--primary); color: var(--primary); }
-
 /* ---- EXPLORE (探索フィルター) ---- */
 .explore-panel {
   background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px;
@@ -1591,19 +1577,6 @@ canvas#scanCanvas { display: none; }
 <!-- ===== RECOMMEND ===== -->
 <div id="page-recommend" class="page active">
   <div class="new-top-page">
-
-    <!-- HERO: はじめかたを選ぶ -->
-    <section class="search-section">
-      <div class="search-section-inner">
-
-        <div class="home-quicklinks fade-in">
-          <span>🍶 まずは、はじめかたを選ぶ</span>
-          <button type="button" class="home-quicklinks-btn home-quicklinks-btn-primary" onclick="showTab('ai')">AI診断ではじめる</button>
-          <button type="button" class="home-quicklinks-btn home-quicklinks-btn-outline" onclick="showTab('map')">酒蔵を見る</button>
-        </div>
-
-      </div>
-    </section>
 
     <!-- WEEKLY SAKE -->
     <section class="weekly-section">
